@@ -172,14 +172,24 @@ public class ObjectManagerScript : MonoBehaviour {
 						if (!merged) {
 							// Merge with held deck (if any)
 							foreach (GameObject deck in heldDecks) {
-								/* bool facing_same_way = Vector3.Dot(grabbable.transform.up, deck.transform.up) <= 0.0;
-								if (facing_same_way) {
-									// Put new card on lowest side of held deck
-									deck.GetComponent<DeckScript>().AddCard((deck.transform.up.y < 0.0f), grabbable.GetComponent<CardScript>().card_id());
-									grabbable.GetComponent<CardScript>().SetCardID(-1);
+								bool facing_same_way = Vector3.Dot(grabbable.transform.up, deck.transform.up) > 0.0;
+								
+								if(facing_same_way){
+									bool top = Vector3.Dot(deck.transform.position - grabbable.transform.position, deck.transform.up) <= 0.0;
+									var cards = grabbable.GetComponent<DeckScript>().GetCards();
+									if(!top){
+										foreach(var card in cards){
+											deck.GetComponent<DeckScript>().AddCard(top, card);
+										}
+									} else {
+										for(int i=cards.Count-1; i>=0; --i){
+											deck.GetComponent<DeckScript>().AddCard(top, cards[i]);
+										}
+									}
+									cards.Clear();
 									networkView.RPC("DestroyObject",RPCMode.AllBuffered,grabbable.networkView.viewID);
 									break;
-								}*/
+								}
 							}
 						}
 					}
