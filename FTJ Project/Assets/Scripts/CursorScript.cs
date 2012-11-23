@@ -90,6 +90,11 @@ public class CursorScript : MonoBehaviour {
 	}
 	
 	[RPC]
+	public void TellObjectManagerAboutGrabQueue(int grab_id, int player_id){
+		ObjectManagerScript.Instance().ClientGrabQueue(grab_id, player_id);
+	}
+	
+	[RPC]
 	public void TellObjectManagerAboutCardPeel(int grab_id, int player_id){
 		ObjectManagerScript.Instance().ClientCardPeel(grab_id, player_id);
 	}
@@ -104,6 +109,14 @@ public class CursorScript : MonoBehaviour {
 			networkView.RPC("TellObjectManagerAboutGrab",RPCMode.Server,grab_id,player_id);
 		} else {
 			TellObjectManagerAboutGrab(grab_id, player_id);
+		}
+	}
+	
+	void GrabQueue(int grab_id, int player_id){
+		if(!Network.isServer){
+			networkView.RPC("TellObjectManagerAboutGrabQueue",RPCMode.Server,grab_id,player_id);
+		} else {
+			TellObjectManagerAboutGrabQueue(grab_id, player_id);
 		}
 	}
 	
@@ -137,11 +150,14 @@ public class CursorScript : MonoBehaviour {
 				}
 			}
 			
-			if(Input.GetMouseButton(0)){
+			RaycastHit[] raycast_hits = {};
+			if (Input.GetMouseButton(0) || Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || Input.GetMouseButton(1)) {
 				Ray ray = main_camera.ScreenPointToRay(Input.mousePosition);
-				RaycastHit[] raycast_hits;
 				raycast_hits = Physics.RaycastAll(ray);
 				System.Array.Sort(raycast_hits, new RaycastHitComparator());
+			}
+			
+			if(Input.GetMouseButton(0) && !Input.GetMouseButton(1)){
 				int hit_deck_id = -1;
 				foreach(RaycastHit hit in raycast_hits){ 
 					var hit_obj = hit.collider.gameObject;
@@ -169,7 +185,7 @@ public class CursorScript : MonoBehaviour {
 						}
 						break;
 					}
-					if(!hit_obj.GetComponent<DiceScript>() && !Input.GetMouseButtonDown(0)){
+					if(!hit_obj.GetComponent<DiceScript>() && !Input.GetMouseButtonDown(0) && !Input.GetMouseButtonDown(1)){
 						continue;
 					}
 					if(hit_obj.GetComponent<DeckScript>()){
@@ -186,6 +202,30 @@ public class CursorScript : MonoBehaviour {
 						TellObjectManagerAboutCardPeel(deck_held_id_,id_);
 					}
 					deck_held_time_ = 0.0f;
+				}
+			}
+			if(Input.GetMouseButton(1)){
+				int hit_deck_id = -1;
+				foreach(RaycastHit hit in raycast_hits){ 
+					var hit_obj = hit.collider.gameObject;
+					if(hit_obj.layer != LayerMask.NameToLayer("Dice") && 
+					   hit_obj.layer != LayerMask.NameToLayer("Tokens") && 
+					   hit_obj.layer != LayerMask.NameToLayer("Cards"))
+				    {
+						continue;
+					}
+					GrabbableScript grabbable_script = hit_obj.GetComponent<GrabbableScript>();
+					if(!grabbable_script){
+						hit_obj = hit_obj.transform.parent.gameObject;
+						grabbable_script = hit_obj.GetComponent<GrabbableScript>();
+					}
+					if(hit_obj.GetComponent<DeckScript>()){
+						hit_deck_id = grabbable_script.id_;
+					}
+					if(grabbable_script.held_by_player_ == id_){
+						continue;
+					}
+					GrabQueue(grabbable_script.id_, id_);
 				}
 			}
 			if(Input.GetMouseButtonUp(0)){

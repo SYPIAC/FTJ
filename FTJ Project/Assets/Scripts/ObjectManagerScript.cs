@@ -107,6 +107,136 @@ public class ObjectManagerScript : MonoBehaviour {
 		}
 	}
 	
+	public void ClientGrabQueue(int grabbed_id, int player_id){
+		// Check if client is already holding dice or tokens (N/A for this action)
+		bool holding_anything = false;
+		bool holding_anything_but_dice = false;
+		//Face up and face down cards/decks are stored separately
+		var heldCards = new List<GameObject>();
+		var heldDecks = new List<GameObject>();
+		foreach(GameObject grabbable in grabbable_objects){
+			GrabbableScript grabbable_script = grabbable.GetComponent<GrabbableScript>();
+			if(grabbable_script.held_by_player_ == player_id){
+				// holding_anything = true;
+				if (grabbable.GetComponent<DeckScript>()) {
+					heldDecks.Add(grabbable);
+				} else if (grabbable.GetComponent<CardScript>()) {
+					heldCards.Add(grabbable);
+				}
+				/*
+				if(!grabbable.GetComponent<DiceScript>()){
+					holding_anything_but_dice = true;
+				}
+				*/
+			}
+		}
+		CursorScript cursor_script = null;
+		foreach(GameObject cursor in cursor_objects){
+			if(cursor.GetComponent<CursorScript>().id() == player_id){
+				cursor_script = cursor.GetComponent<CursorScript>();
+			}
+		}
+		// See if client can grab object given already-grabbed objects
+		foreach(GameObject grabbable in grabbable_objects){
+			GrabbableScript grabbable_script = grabbable.GetComponent<GrabbableScript>();
+			if(grabbable_script.id_ == grabbed_id){
+				if(grabbable_script.held_by_player_ == player_id){
+					return;
+				}
+				if((grabbable.GetComponent<DiceScript>() && !holding_anything_but_dice) ||
+				   (grabbable.GetComponent<TokenScript>() && !holding_anything)||
+				   (grabbable.GetComponent<ParentTokenScript>() && !holding_anything)||
+				   (grabbable.GetComponent<DeckScript>() && !holding_anything) ||
+			       (grabbable.GetComponent<CardScript>() && !holding_anything)||
+			       (grabbable.GetComponent<CoinScript>() && !holding_anything))
+			    {
+					grabbable_script.held_by_player_ = player_id;
+					if(grabbable.GetComponent<DiceScript>()){
+						grabbable.GetComponent<DiceScript>().PickUpSound();
+					}
+					if(grabbable.GetComponent<CoinScript>()){
+						grabbable.GetComponent<CoinScript>().PickUpSound();
+					}
+					if(grabbable.GetComponent<DeckScript>()){
+						cursor_script.SetCardFaceUp((grabbable.transform.up.y > 0.0f));
+						cursor_script.SetCardRotated(GetRotateFromGrabbable(grabbable));
+						grabbable.GetComponent<DeckScript>().PickUpSound();
+						
+						// Merge with held deck(s)
+						/* if(deck_a.GetComponent<GrabbableScript>().held_by_player_ == -1 && deck_b.GetComponent<GrabbableScript>().held_by_player_ == -1 && facing_same_way && close_enough){
+							bool top = Vector3.Dot(deck_a.transform.position - deck_b.transform.position, deck_a.transform.up) <= 0.0;
+							var cards = deck_b.GetComponent<DeckScript>().GetCards();
+							if(!top){
+								foreach(var card in cards){
+									deck_a.GetComponent<DeckScript>().AddCard(top, card);
+								}
+							} else {
+								for(int i=cards.Count-1; i>=0; --i){
+									deck_a.GetComponent<DeckScript>().AddCard(top, cards[i]);
+								}
+							}
+							cards.Clear();
+							networkView.RPC("DestroyObject",RPCMode.AllBuffered,deck_b.networkView.viewID);
+						} */
+					}
+					if(grabbable.GetComponent<CardScript>()){
+						cursor_script.SetCardFaceUp((grabbable.transform.up.y < 0.0f));
+						cursor_script.SetCardRotated(GetRotateFromGrabbable(grabbable));
+						grabbable.GetComponent<CardScript>().PickUpSound();
+						
+						bool merged = false;
+						// Create deck with held card (if any)
+						foreach (GameObject card in heldCards) {
+							bool facing_same_way = Vector3.Dot(grabbable.transform.up, card.transform.up) > 0.0;
+							
+							if(facing_same_way){
+								bool top = Vector3.Dot(card.transform.position - grabbable.transform.position, card.transform.up) >= 0.0;
+								var deck = (GameObject)Network.Instantiate(deck_prefab, (card.transform.position + grabbable.transform.position)*0.5f, card.transform.rotation,0); 
+								deck.transform.rotation = Quaternion.AngleAxis(180,deck.transform.right)*deck.transform.rotation;
+								deck.GetComponent<DeckScript>().AddCard(!top, grabbable.GetComponent<CardScript>().card_id());
+								deck.GetComponent<DeckScript>().AddCard(!top, card.GetComponent<CardScript>().card_id());
+								
+								// Mimick grab
+								deck.GetComponent<GrabbableScript>().held_by_player_ = player_id;
+								deck.rigidbody.mass = 0.2f;
+								cursor_script.SetCardFaceUp((deck.transform.up.y > 0.0f));
+								cursor_script.SetCardRotated(GetRotateFromGrabbable(deck));
+
+								// TODO: Investigate reason for cardid change
+								card.GetComponent<CardScript>().SetCardID(-1);
+								networkView.RPC("DestroyObject",RPCMode.AllBuffered,card.networkView.viewID);
+								grabbable.GetComponent<CardScript>().SetCardID(-1);
+								networkView.RPC("DestroyObject",RPCMode.AllBuffered,grabbable.networkView.viewID);
+								merged = true;
+								break;
+							}
+						}
+						if (!merged) {
+							// Merge with held deck (if any)
+							foreach (GameObject deck in heldDecks) {
+								bool facing_same_way = Vector3.Dot(grabbable.transform.up, deck.transform.up) <= 0.0;
+								if (facing_same_way) {
+									// Put new card on lowest side of held deck
+									deck.GetComponent<DeckScript>().AddCard((deck.transform.up.y < 0.0f), grabbable.GetComponent<CardScript>().card_id());
+									grabbable.GetComponent<CardScript>().SetCardID(-1);
+									networkView.RPC("DestroyObject",RPCMode.AllBuffered,grabbable.networkView.viewID);
+									break;
+								}
+							}
+						}
+					}
+					if(grabbable.GetComponent<TokenScript>()){
+						grabbable.GetComponent<TokenScript>().PickUpSound();
+					}
+					if(grabbable.GetComponent<ParentTokenScript>()){
+						grabbable.GetComponent<ParentTokenScript>().PickUpSound();
+						cursor_script.SetCardRotated(GetRotateFromGrabbable(grabbable));
+					}
+					grabbable.rigidbody.mass = 0.2f;
+				}
+			}
+		}
+	}
 	
 	public void ClientCardPeel(int grabbed_id, int player_id){
 		// Return if player is already holding something
