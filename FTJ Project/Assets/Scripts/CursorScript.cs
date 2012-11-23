@@ -21,6 +21,7 @@ public class CursorScript : MonoBehaviour {
 	int id_ = -1;
 	float deck_held_time_ = 0.0f;
 	int deck_held_id_ = -1;
+	float queue_held_time = 0.0f;
 	const float DECK_HOLD_THRESHOLD = 0.5f;
 	bool card_face_up_ = false;
 	int card_rotated_ = 0;
@@ -205,28 +206,34 @@ public class CursorScript : MonoBehaviour {
 				}
 			}
 			if(Input.GetMouseButton(1)){
-				int hit_deck_id = -1;
-				foreach(RaycastHit hit in raycast_hits){ 
-					var hit_obj = hit.collider.gameObject;
-					if(hit_obj.layer != LayerMask.NameToLayer("Dice") && 
-					   hit_obj.layer != LayerMask.NameToLayer("Tokens") && 
-					   hit_obj.layer != LayerMask.NameToLayer("Cards"))
-				    {
-						continue;
+				if (Input.GetMouseButtonDown(1) || queue_held_time > DECK_HOLD_THRESHOLD) {
+					int num_grabbed = 0;
+					foreach(RaycastHit hit in raycast_hits){ 
+						var hit_obj = hit.collider.gameObject;
+						if(hit_obj.layer != LayerMask.NameToLayer("Dice") && 
+						   hit_obj.layer != LayerMask.NameToLayer("Tokens") && 
+						   hit_obj.layer != LayerMask.NameToLayer("Cards"))
+					    {
+							continue;
+						}
+						GrabbableScript grabbable_script = hit_obj.GetComponent<GrabbableScript>();
+						if(!grabbable_script){
+							hit_obj = hit_obj.transform.parent.gameObject;
+							grabbable_script = hit_obj.GetComponent<GrabbableScript>();
+						}
+						if(grabbable_script.held_by_player_ == id_){
+							continue;
+						}
+						GrabQueue(grabbable_script.id_, id_);
+						++num_grabbed;
+						//if (queue_held_time <= DECK_HOLD_THRESHOLD)
+							break;
 					}
-					GrabbableScript grabbable_script = hit_obj.GetComponent<GrabbableScript>();
-					if(!grabbable_script){
-						hit_obj = hit_obj.transform.parent.gameObject;
-						grabbable_script = hit_obj.GetComponent<GrabbableScript>();
+					if (Input.GetMouseButtonDown(1) && num_grabbed == 0) {
+						queue_held_time = DECK_HOLD_THRESHOLD + 0.1f;
 					}
-					if(hit_obj.GetComponent<DeckScript>()){
-						hit_deck_id = grabbable_script.id_;
-					}
-					if(grabbable_script.held_by_player_ == id_){
-						continue;
-					}
-					GrabQueue(grabbable_script.id_, id_);
 				}
+				queue_held_time += Time.deltaTime;
 			}
 			if(Input.GetMouseButtonUp(0)){
 				if(!Network.isServer){
@@ -235,6 +242,9 @@ public class CursorScript : MonoBehaviour {
 					TellObjectManagerAboutMouseRelease(id_);
 				}
 				deck_held_time_ = 0.0f;
+			}
+			if(Input.GetMouseButtonUp(1)){
+				queue_held_time = 0.0f;
 			}
 			rigidbody.position = pos;
 			transform.position = pos;
