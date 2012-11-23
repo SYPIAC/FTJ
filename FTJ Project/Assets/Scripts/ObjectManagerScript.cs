@@ -123,11 +123,6 @@ public class ObjectManagerScript : MonoBehaviour {
 				} else if (grabbable.GetComponent<CardScript>()) {
 					heldCards.Add(grabbable);
 				}
-				/*
-				if(!grabbable.GetComponent<DiceScript>()){
-					holding_anything_but_dice = true;
-				}
-				*/
 			}
 		}
 		CursorScript cursor_script = null;
@@ -158,26 +153,35 @@ public class ObjectManagerScript : MonoBehaviour {
 						grabbable.GetComponent<CoinScript>().PickUpSound();
 					}
 					if(grabbable.GetComponent<DeckScript>()){
-						cursor_script.SetCardFaceUp((grabbable.transform.up.y > 0.0f));
-						cursor_script.SetCardRotated(GetRotateFromGrabbable(grabbable));
 						grabbable.GetComponent<DeckScript>().PickUpSound();
 						
-						// Merge with held deck(s)
-						/* if(deck_a.GetComponent<GrabbableScript>().held_by_player_ == -1 && deck_b.GetComponent<GrabbableScript>().held_by_player_ == -1 && facing_same_way && close_enough){
-							bool top = Vector3.Dot(deck_a.transform.position - deck_b.transform.position, deck_a.transform.up) <= 0.0;
-							var cards = deck_b.GetComponent<DeckScript>().GetCards();
-							if(!top){
-								foreach(var card in cards){
-									deck_a.GetComponent<DeckScript>().AddCard(top, card);
-								}
-							} else {
-								for(int i=cards.Count-1; i>=0; --i){
-									deck_a.GetComponent<DeckScript>().AddCard(top, cards[i]);
-								}
+						bool merged = false;
+						// Merge deck with held card (if any)
+						foreach (GameObject card in heldCards) {
+							bool facing_same_way = Vector3.Dot(card.transform.up, grabbable.transform.up) <= 0.0;
+							if (facing_same_way) {
+								grabbable.transform.position = card.transform.position;
+								grabbable.transform.rotation = Quaternion.AngleAxis(180,new Vector3(0,0,1))*card.transform.rotation;  // TODO: Flip
+								// Put held card on highest side of new deck
+								grabbable.GetComponent<DeckScript>().AddCard((grabbable.transform.up.y > 0.0f), card.GetComponent<CardScript>().card_id());
+								card.GetComponent<CardScript>().SetCardID(-1);
+								networkView.RPC("DestroyObject",RPCMode.AllBuffered,card.networkView.viewID);
+								break;
 							}
-							cards.Clear();
-							networkView.RPC("DestroyObject",RPCMode.AllBuffered,deck_b.networkView.viewID);
-						} */
+						}
+						if (!merged) {
+							// Merge with held deck (if any)
+							foreach (GameObject deck in heldDecks) {
+								/* bool facing_same_way = Vector3.Dot(grabbable.transform.up, deck.transform.up) <= 0.0;
+								if (facing_same_way) {
+									// Put new card on lowest side of held deck
+									deck.GetComponent<DeckScript>().AddCard((deck.transform.up.y < 0.0f), grabbable.GetComponent<CardScript>().card_id());
+									grabbable.GetComponent<CardScript>().SetCardID(-1);
+									networkView.RPC("DestroyObject",RPCMode.AllBuffered,grabbable.networkView.viewID);
+									break;
+								}*/
+							}
+						}
 					}
 					if(grabbable.GetComponent<CardScript>()){
 						cursor_script.SetCardFaceUp((grabbable.transform.up.y < 0.0f));
