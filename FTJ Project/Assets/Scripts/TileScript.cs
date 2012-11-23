@@ -11,16 +11,17 @@ public class TileScript : MonoBehaviour {
 		render_texture.useMipMap = true;
 		render_texture.filterMode = FilterMode.Trilinear;
 		render_texture.mipMapBias = -0.5f;
-		camera.targetTexture = render_texture; 
+		camera.targetTexture = render_texture;
 		
 		transform.FindChild("Title").gameObject.layer = LayerMask.NameToLayer("Active Card Render Texture");
 		transform.FindChild("Rules").gameObject.layer = LayerMask.NameToLayer("Active Card Render Texture");
 		
 		var tile_mesh = transform.FindChild("Tile_base").FindChild("default");
-		var material = new Material(tile_mesh.renderer.material);
-		material.mainTexture = render_texture;
+		tile_mesh.renderer.material = new Material(tile_mesh.renderer.material);
+		tile_mesh.renderer.material.mainTexture = null; // render_texture;
 		
 		camera.Render();
+		
 		transform.FindChild("Title").gameObject.layer = LayerMask.NameToLayer("Card Render Texture");
 		transform.FindChild("Rules").gameObject.layer = LayerMask.NameToLayer("Card Render Texture");
 		

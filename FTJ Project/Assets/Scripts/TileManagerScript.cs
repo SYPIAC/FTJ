@@ -13,7 +13,7 @@ public class TileManagerScript : MonoBehaviour {
 	const int MAX_RULES_WIDTH = 115;
 		
 	// Use this for initialization
-	void Awake () {
+	void Start () {
 		var tile_bake_object = (GameObject)GameObject.Instantiate(tile_bake_prefab);
 		
 		var dict = Json.Deserialize(board_json.text) as Dictionary<string,object>;
