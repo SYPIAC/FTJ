@@ -1,3 +1,14 @@
+Controls:
+    Additional mouse controls (like right click for tapping, scroll wheel to rotate, etc.)
+Add more dice types
+    (Add a drawer with infinite (or high number) of each type?)
+Add a zoom icon to the cursor when zoomed in
+Saving
+Re-initialize dynamic textures on focus loss
+Paper (to write on)
+In-game rule book? (kept off screen most of time?)
+
+
 +Create/join server
 +Copy short link for joining specific server
 +Display connected players
