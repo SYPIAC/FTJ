@@ -1,3 +1,39 @@
-Desperate Gods
-=====
+#Desperate Gods (Unnamed Mod)
+
+## Implemented
+
+- Now using Unity 4
+- Ability to pick up multiple items / entire decks (using right click)
+- Some balance changes (to be summarized based on commits later)
+
+## Goals
+
+In no particular order:
+
+- Move board definition and resources outside of Unity to allow for easier mods
+- Add additional mouse-based controls; all basic actions should be available with only mouse (ex. mouse wheel to rotate)
+- Add more objects to game. Additional dice (ex. d20), paper to write on, etc.
+    - Perhaps some sort of "infinite" piles to supply dice, game currency / units, etc.
+- Implement some sort of mechanic for games with hidden information (so you can "peek" at your cards or similar). Perhaps four "fog of war" areas where each cursor can claim one and only they can enter / see what's inside?
+- Additional balance changes
+- Add icon to zoomed-in cursors
+- Allow saving and restoring of board
+- Add more host settings (ex. change password, limit "Reset Board" use)
+- Add host transfer (perhaps make this automatic when host disconnects)
+- Improve GUI
+- Add in-game rules access (I'd like it to be an actual in-game book you can pull out, so everyone can see the rules, but a GUI element will likely be more feasible for now)
+- Downgrade from Unity Pro to Unity
+    - Remove use of RenderTexture (used for all tiles and cards right now)
+    - Other changes (remove custom shaders?)
+    - Use older dynamic shadows solution
+- Fix dynamic textures becoming glitched when focus is lost / window is moved
+    - This will likely be "fixed" by rendering all the card and tile textures and importing the fully-rendered images with the new mod loading system
+- Fix deck merging causing decks to vanish / teleport when holding right click (only occurs with high latency, further testing required)
+- Fix drawing card from two-card face-up deck causing last card to go flying
+
+
+## License
+
+As per original license by Wolfire games:
+
 This repository is public for convenience and for personal use, but is not licensed for redistribution in whole or in part. We are open to issuing free permissive licenses for mods or code pieces, but you will just have to get our permission first ( contact@wolfire.com ), because we were burnt in the past by public confusion about open-source licensing. ( See http://blog.wolfire.com/2011/02/Counterfeit-Lugaru-on-Apple-s-App-Store-developing for more about this ). Thank you for understanding!
