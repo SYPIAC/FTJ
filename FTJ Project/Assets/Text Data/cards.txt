@@ -119,9 +119,9 @@ humans\" (Beggars 12.1)"
 	  "Target": 3
 	  "Gold": 1
 	  "Points": 3
-	  "Rules": "On loss: instead of dealing 
-damage, Satisfied Ghoul steals 
-one of your defeated enemies",
+	  "Rules": "On loss: Deals no damage,
+steals one of your defeated
+enemies (your choice)",
 	  "Flavour": "\"Death slept a deep, 
 dreamless sleep\" 
 (Lovers 2.1)"
@@ -248,8 +248,8 @@ on and procreate\"
 	  "Target": 4,
 	  "Gold": 2,
 	  "Points": 4,
-	  "Rules": "On win: every player takes 
-one damage",
+	  "Rules": "On win: every other player
+takes one damage",
 	  "Flavour": "\"Your people have taken
 the powers they could 
 control\" (Spirits 1.4)"
@@ -307,12 +307,12 @@ birdmen\" (Beggars 8.2)"
 	{
       "Title": "Deprived Succubus",
 	  "Type": "Demonic Monster",
-	  "Target": 6,
+	  "Target": 5,
 	  "Gold": 0,
 	  "Points": 6,
-	  "Rules": "On loss: take no damage, but
-spend next turn fighting 
-Deprived Succubus again",
+	  "Rules": "On loss: spend next turn
+fighting Deprived Succubus
+again",
 	  "Flavour": "\"I will call her Lust\"
 (Lovers 2.10)"
 	  "Duplicates": 1
@@ -323,10 +323,10 @@ Deprived Succubus again",
 	  "Type": "Minor God",
 	  "Target": 5,
 	  "Gold": 0,
-	  "Points": 8,
+	  "Points": 5,
 	  "Rules": "On win: any player may take
-one damage to put Serene 
-Way back in the deck",
+one non-lethal damage to
+return this to the deck",
 	  "Flavour": "\"Driven mad through 
 exposure to their selfish
 gods\" (Beggars 11.7)"
@@ -339,7 +339,7 @@ gods\" (Beggars 11.7)"
 	  "Target": 6,
 	  "Gold": 0,
 	  "Points": 6,
-	  "Rules": "On loss: take four damage",
+	  "Rules": "On loss: take three damage",
 	  "Flavour": "\"Oh no. What is that?\"
  (Lovers 2.11)"
 	  "Duplicates": 1
@@ -462,8 +462,9 @@ scale war\" (Beggars 13.1)"
  	 "Title": "Unflinching Sword",
 	  "Type": "Equipment",
 	  "Price" : 9
-	  "Rules": "Add 1 to all combat rolls
-You may reroll two attack dice",
+	  "Rules": "Add 1 to your combat roll
+or roll two attack dice
+(do not discard)",
 	  "Flavour": "\"There are countless artifacts
 in existence, and more being
 made\" (Relics 6.1)"
@@ -472,18 +473,6 @@ made\" (Relics 6.1)"
 	  "Back" : 5
 	}
 {
- 	 "Title": "Receptive Gem",
-	  "Type": "Equipment",
-	  "Price" : 4
-	  "Rules": "Use receptive gem to cast a 
-spell without discarding it 
-Roll to see if it breaks(1,2)",
-	  "Flavour": "\"Her blood crystallizes to
-form the gems\" (Relics 3.6)"
-	  "Duplicates": 1
-	  "Image" : 34
-	  "Back" : 5
-	}{
 	  "Price" : 2
       "Title": "Shy Mask",
 	  "Type": "Equipment",
@@ -533,8 +522,9 @@ bound to the parchment\"
 	  "Price" : 8
       "Title": "Ravenous Staff",
 	  "Type": "Equipment",
-	  "Rules": "Take one damage to cast a 
-spell without discarding it",
+	  "Rules": "Take one damage to use
+equipment without
+discarding it",
 	  "Flavour": "\"Powerful artifacts are
 created from an unstable
 combination\" (Relics 5.2)"
