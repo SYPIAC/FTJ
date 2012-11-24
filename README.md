@@ -26,10 +26,16 @@ In no particular order:
     - Remove use of RenderTexture (used for all tiles and cards right now)
     - Other changes (remove custom shaders?)
     - Use older dynamic shadows solution
-- Fix dynamic textures becoming glitched when focus is lost / window is moved
+
+## Bugs
+
+- Dynamic textures become glitched when focus is lost / window is moved
+    - This makes all cards and tiles unreadable
     - This will likely be "fixed" by rendering all the card and tile textures and importing the fully-rendered images with the new mod loading system
-- Fix deck merging causing decks to vanish / teleport when holding right click (only occurs with high latency, further testing required)
-- Fix drawing card from two-card face-up deck causing last card to go flying
+- Drawing card from two-card face-up deck causes remaining card to go flying
+- Camera can be panned off the board
+- Dice often end up at top of screen but not flat, so they cannot be read
+- Deck merging (using new right click feature) can cause decks to vanish / teleport with high latency (further testing required)
 
 
 ## License
