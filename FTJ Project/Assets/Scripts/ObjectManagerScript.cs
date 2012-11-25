@@ -6,7 +6,8 @@ public class ObjectManagerScript : MonoBehaviour {
 	public GameObject deck_prefab;
 	List<GameObject> grabbable_objects = new List<GameObject>();	
 	List<GameObject> cursor_objects = new List<GameObject>();
-	GameObject board_object = null;
+	// GameObject board_object = null;
+	public ModManagerScript mod_manager;
 	const float HOLD_FORCE = 20000.0f;
 	const float ANGULAR_FORCE = 400.0f;
 	const float HOLD_LINEAR_DAMPENING = 0.4f;
@@ -17,6 +18,7 @@ public class ObjectManagerScript : MonoBehaviour {
 	const float SHAKE_THRESHOLD = 1.0f;
 	int free_id = 0;
 	
+	/*
 	public void RegisterBoardObject(GameObject obj){
 		board_object = obj;
 	}
@@ -24,6 +26,7 @@ public class ObjectManagerScript : MonoBehaviour {
 	public void UnRegisterBoardObject(){
 		board_object = null;
 	}
+	*/
 	
 	int GetRotateFromGrabbable(GameObject grabbable){
 		var forward = grabbable.transform.forward;
@@ -362,17 +365,18 @@ public class ObjectManagerScript : MonoBehaviour {
 		GameObject.Destroy(NetworkView.Find(id).gameObject);
 	}
 	
-	[RPC]
+	// [RPC]
 	public void RecoverDice() {
 		if(!Network.isServer){
-			networkView.RPC("RecoverDice", RPCMode.Server);
+			// networkView.RPC("RecoverDice", RPCMode.Server);
 			return;
 		} else {
 			foreach(GameObject grabbable in grabbable_objects){
 				networkView.RPC("DestroyObject",RPCMode.AllBuffered,grabbable.networkView.viewID);
 			}
-			board_object.GetComponent<BoardScript>().SpawnDice();
-			NetUIScript.Instance().SpawnHealthTokens();
+			mod_manager.SpawnActiveModGrabbables();
+			// board_object.GetComponent<BoardScript>().SpawnDice();
+			// NetUIScript.Instance().SpawnHealthTokens();
 		}
 	}
 	

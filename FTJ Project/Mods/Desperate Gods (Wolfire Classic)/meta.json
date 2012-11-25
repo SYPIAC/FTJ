@@ -1,0 +1,39 @@
+{
+    "game_name": "Desperate Gods (Classic)",
+    "game_author": "Wolfire Games",
+    "game_icon": "Misc/icon.tga",
+    "game_rules_path": "Misc/rules.txt",
+    "game_bounds": [200, 80],
+    "max_players": 4,
+    "min_players": 2,
+
+    "objects": [
+{
+    "name": "Game Board",
+    "type": "board",
+    "texture": "Boards/board.tga",
+    "texture_n": "Boards/board_n.tga",
+    "size": [100, 40],
+    "pos": [0, -10]
+},
+{
+    "name": "Wilderness Deck",
+    "type": "deck",
+    "cards": {
+        "type": "folder",
+        "src": "Cards/Wilderness",
+        "filter": "",
+        "back": "Cards/backs/wilderness_back.tga"
+    },
+    "rot": "horizontal",
+    "pos": [25, -20],
+    "scale": 1
+},
+{
+    "name": "Dice",
+    "type": "dice",
+    "count": 4,
+    "pos": [0, 0]
+}
+    ]
+}

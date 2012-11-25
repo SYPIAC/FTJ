@@ -63,6 +63,7 @@
      <Compile Include="Assets\Scripts\JSONTest.cs" />
      <Compile Include="Assets\Scripts\MainCameraScript.cs" />
      <Compile Include="Assets\Scripts\MiniJSON.cs" />
+     <Compile Include="Assets\Scripts\ModManagerScript.cs" />
      <Compile Include="Assets\Scripts\Net.cs" />
      <Compile Include="Assets\Scripts\NetEventScript.cs" />
      <Compile Include="Assets\Scripts\NetUIScript.cs" />

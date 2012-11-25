@@ -27,6 +27,22 @@ In no particular order:
     - Other changes (remove custom shaders?)
     - Use older dynamic shadows solution
 
+## Progress
+
+- Move board definition and resources outside of Unity to allow for easier mods
+    - YES - Remove current board resources from project
+    - YES - Create file format for mod information
+    - PARTIAL - Load mod information
+        - Dice and Board information loaded
+    - PARTIAL - Spawn objects based on mod information
+        - Dice are spawned
+        - Coordinate system is off, needs to be scaled
+    - NO - Load textures from file
+    - NO - Enforce identical mods for networking
+    - NO - Filter by mod in server list
+    - NO - Add interface to choose desired mod (or perhaps just a more involved server setup step)
+    - NO - Load additional assets (sounds, models) from file
+
 ## Bugs
 
 - Dynamic textures become glitched when focus is lost / window is moved
@@ -36,6 +52,7 @@ In no particular order:
 - Camera can be panned off the board
 - Dice often end up at top of screen but not flat, so they cannot be read
 - Deck merging (using new right click feature) can cause decks to vanish / teleport with high latency (further testing required)
+- Shadows break in upper right corner
 
 
 ## License

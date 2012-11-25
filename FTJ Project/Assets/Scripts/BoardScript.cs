@@ -43,13 +43,13 @@ public class BoardScript : MonoBehaviour {
 			SpawnDice();
 		}
 		if(ObjectManagerScript.Instance()){
-			ObjectManagerScript.Instance().RegisterBoardObject(gameObject);
+			// ObjectManagerScript.Instance().RegisterBoardObject(gameObject);
 		}
 	}
 	
 	void OnDestroy() {
 		if(ObjectManagerScript.Instance()){
-			ObjectManagerScript.Instance().UnRegisterBoardObject();
+			// ObjectManagerScript.Instance().UnRegisterBoardObject();
 		}
 	}
 }

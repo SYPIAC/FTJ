@@ -20,9 +20,10 @@ public class NetUIScript : MonoBehaviour {
 	bool chat_shown_ = false;
 	string chat_ = "";
 	public GameObject cursor_prefab;
-	public GameObject board_prefab;
-	public GameObject play_area_prefab;
-	public GameObject token_prefab;
+	// public GameObject board_prefab;
+	// public GameObject play_area_prefab;
+	// public GameObject token_prefab;
+	public ModManagerScript mod_manager;
 	public GUISkin help_gui_skin;
 	public AudioClip[] chat_sounds;
 	public AudioClip[] songs;
@@ -31,7 +32,7 @@ public class NetUIScript : MonoBehaviour {
 	int target_song_ = -1;
 	int first_state_ui_update = 0;
 	const float MAX_SONG_VOLUME = 0.4f;
-	List<GameObject> play_areas = new List<GameObject>();
+	// List<GameObject> play_areas = new List<GameObject>();
 	Vector2 scroll_pos = new Vector2();
 	
 	string queued_join_game_name_ = "";
@@ -98,6 +99,7 @@ public class NetUIScript : MonoBehaviour {
 		}
 	}
 	
+	/*
 	public void SpawnHealthTokens() {
 		foreach(GameObject play_area in play_areas){
 			Transform token_spawns = play_area.transform.Find("TokenSpawns");
@@ -106,6 +108,7 @@ public class NetUIScript : MonoBehaviour {
 			}
 		}
 	}
+	*/
 	
 	void NetEventServerInitialized(){
 		if(state_ == State.CREATING){
@@ -114,15 +117,16 @@ public class NetUIScript : MonoBehaviour {
 		ConsoleScript.Log("Server initialized");
 		int player_id = int.Parse(Network.player.ToString());
 		TellServerPlayerName(player_name_);
-		Network.Instantiate(board_prefab, GameObject.Find("board_spawn").transform.position, GameObject.Find("board_spawn").transform.rotation,0);
+		mod_manager.SpawnActiveMod();
 		int count = 0;
-		foreach(Transform player_spawn in GameObject.Find("play_areas").transform){
+		/*foreach(Transform player_spawn in GameObject.Find("play_areas").transform){
 			GameObject play_area_obj = (GameObject)Network.Instantiate(play_area_prefab, player_spawn.transform.position, player_spawn.transform.rotation,0);
 			play_area_obj.GetComponent<PlayAreaScript>().SetColor(count);
 			play_areas.Add (play_area_obj);
 			++count;
 		}
 		SpawnHealthTokens();
+		*/
 		
 		Network.Instantiate(cursor_prefab, new Vector3(0,0,0), Quaternion.identity, 0);
 	}
@@ -376,7 +380,9 @@ public class NetUIScript : MonoBehaviour {
 			case State.NONE:
 				help_shown_ = false;
 				chat_shown_ = false;
-				GameObject.Find("Title Holder").GetComponent<TitleHolderScript>().Hide();
+				var title_holder = GameObject.Find("Title Holder");
+				if (title_holder != null)
+					title_holder.GetComponent<TitleHolderScript>().Hide();
 				break;
 		}
 		if(state_ == State.NONE && state != State.NONE){
@@ -479,8 +485,10 @@ public class NetUIScript : MonoBehaviour {
 		}
 		GUILayout.EndHorizontal();*/
 		GUILayout.BeginHorizontal();
-		if(GUILayout.Button("Restart Game")){
-			ObjectManagerScript.Instance().RecoverDice();
+		if (Network.isServer) {
+			if(GUILayout.Button("Restart Game")){
+				ObjectManagerScript.Instance().RecoverDice();
+			}
 		}
 		GUILayout.EndHorizontal();
 		GUILayout.BeginHorizontal();

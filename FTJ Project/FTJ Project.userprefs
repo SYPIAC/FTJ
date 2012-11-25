@@ -1,20 +1,20 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\ObjectManagerScript.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\NetUIScript.cs">
     <Files>
-      <File FileName="Assets\Scripts\CursorScript.cs" Line="209" Column="29" />
-      <File FileName="Assets\Scripts\ObjectManagerScript.cs" Line="168" Column="12" />
-      <File FileName="Assets\Scripts\CardScript.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\TileScript.cs" Line="21" Column="25" />
-      <File FileName="Assets\Scripts\TileManagerScript.cs" Line="21" Column="52" />
-      <File FileName="Assets\Scripts\DeckScript.cs" Line="175" Column="1" />
-      <File FileName="Assets\Scripts\NetUIScript.cs" Line="12" Column="50" />
+      <File FileName="Assets\Scripts\NetUIScript.cs" Line="490" Column="36" />
+      <File FileName="Assets\Scripts\CardManagerScript.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\CardData.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\ModManagerScript.cs" Line="34" Column="74" />
+      <File FileName="Assets\Scripts\ObjectManagerScript.cs" Line="369" Column="20" />
+      <File FileName="Assets\Scripts\BoardScript.cs" Line="11" Column="2" />
+      <File FileName="Assets\Scripts\MainCameraScript.cs" Line="12" Column="33" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore>
-      <Breakpoint file="C:\TestingItems\workingdir\FTJ\FTJ Project\Assets\Scripts\ObjectManagerScript.cs" line="227" />
-      <Breakpoint file="C:\TestingItems\workingdir\FTJ\FTJ Project\Assets\Scripts\ObjectManagerScript.cs" line="517" />
+      <Breakpoint file="C:\TestingItems\workingdir\FTJ\FTJ Project\Assets\Scripts\ObjectManagerScript.cs" line="230" />
+      <Breakpoint file="C:\TestingItems\workingdir\FTJ\FTJ Project\Assets\Scripts\ObjectManagerScript.cs" line="521" />
     </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
