@@ -16,23 +16,48 @@ namespace ModTypes {
 	class Mod {
 		public string name, author, path;
 		public int min_players, max_players;
-		public Vector2 bounds;
+		public Vector2 bounds = default_game_bounds;
 		public Texture icon;  // TODO
 		public List<BaseObject> objects;
 		
+		// Size of rendered area in engine units
+		private static Vector2 game_area = new Vector2(27.34592f, 16.28584f);
+		
+		// Default game_bounds in meta.json - game scale will appear unchanged when used
+		private static Vector2 default_game_bounds = new Vector2(170, 100);
+		// Default scaling factor if meta.json uses the default game_bounds
+		private float default_scale =
+			Mathf.Min(game_area.x / default_game_bounds.x, game_area.y / default_game_bounds.y);
+		
+		float GetScalingFactor() {
+			if (bounds.x <= 0 || bounds.y <= 0)
+				return 1;
+			float scale_x = game_area.x / bounds.x;
+			float scale_y = game_area.y / bounds.y;
+			// Division by default_scale will result in 1 when default game bounds are used
+			return Mathf.Min(scale_x, scale_y) / default_scale;
+		}
+		
 		public void Spawn() {
-			// TODO!
+			float scale = GetScalingFactor();
+			
+			// Adjust table tiling (at default scale it is 4)
+			if (scale > 0) {
+				GameObject.Find("Table").GetComponent<MeshRenderer>().material.SetTextureScale("_MainTex", new Vector2(1f, 1f) * 4f/scale);
+			}
+			
+			// Spawn objects
 			foreach (var obj in objects) {
 				if (obj.prefab != null) {
-					obj.Spawn(bounds);
+					obj.Spawn(scale);
 				}
 			}
 		}
 		public void SpawnGrabbables() {
-			// TODO!
+			float scale = GetScalingFactor();
 			foreach (var obj in objects) {
 				if (obj.GetType() != typeof(Board)) {  // TODO: More general approach
-					obj.Spawn(bounds);
+					obj.Spawn(scale);
 				}
 			}
 		}
@@ -45,7 +70,7 @@ namespace ModTypes {
 		public Vector3 pos, size, scale;  // Size & scale overlap, remove one?
 		public Quaternion rot;  // Can be given as "horizontal", "vertical_reversed", etc.
 		
-		virtual public void Spawn(Vector2 bounds) { }
+		virtual public void Spawn(float scale) { }
 		virtual public void SetRotation(Rotations orientation) {
 			// TODO!
 		}
@@ -63,22 +88,31 @@ namespace ModTypes {
 	// Spawnable types
 	class Dice : BaseObject {
 		public int count;
-		override public void Spawn(Vector2 bounds) {
-			// Using two-row layout (unlimited columns)
-			// TODO: Create better, more square grid for > 4 dice
-			var scale = 1.0f;  // Width of one die
-			var offset_initial = new Vector3(1.5f * scale, 0, 1.5f * scale);
-			var offset_per_column = new Vector3(0, 0, -1.5f * scale);
-			var offset_per_row = new Vector3(-1.5f * scale, 0, 0);
+
+		override public void Spawn(float scale) {
+			// Determine number of columns (always have fewer rows than columns)
+			var dice_per_row = Mathf.FloorToInt(Mathf.Sqrt(count));
+			
+			var die_width = 0.4f * scale;  // Dice physics width is 0.4
+			var offset_initial = new Vector3(1.5f, 0, -1.5f) * die_width * (int)(dice_per_row / 2);
+			var offset_per_column = new Vector3(0, 0, 1.5f * die_width);
+			var offset_per_row = new Vector3(-1.5f * die_width, 0, 0);
+			
+			var die_size = new Vector3(scale, scale, scale);
 			for (int i = 0; i < count; i++) {
-				Network.Instantiate(prefab, pos + offset_initial +
-					offset_per_row * (i % 2) + offset_per_column * (i / 2), rot, 0);
+				var obj = Network.Instantiate(prefab, pos * scale + offset_initial +
+					offset_per_row * (i / dice_per_row) + offset_per_column * (i % dice_per_row), rot, 0) as GameObject;
+				obj.transform.localScale = die_size;
 			}
 		}
 	}
 	
 	class Board : BaseObject {
 		public string texture, texture_n;
+		
+		override public void Spawn(float scale) {
+			
+		}
 	}
 	
 	class Deck : BaseObject {
@@ -96,9 +130,9 @@ public class ModManagerScript : MonoBehaviour {
 	public GameObject board_prefab;
 	public GameObject dice_prefab;
 	public GameObject token_prefab;
-	public GameObject deck_prefab;		
-	public GameObject silver_coin_prefab;	
-	public GameObject gold_coin_prefab;		
+	public GameObject deck_prefab;
+	public GameObject silver_coin_prefab;
+	public GameObject gold_coin_prefab;
 
 	ModTypes.Mod active_mod;
 	List<ModTypes.Mod> mods;
@@ -127,10 +161,12 @@ public class ModManagerScript : MonoBehaviour {
 				// Required data
 				// These exceptions (if any) will be caught by higher try/catch block and halt loading of this mod
 				mod.name = (string) dict["game_name"];
-				var bounds_temp = (IList) dict["game_bounds"];
-				mod.bounds = new Vector2(System.Convert.ToSingle(bounds_temp[0]), System.Convert.ToSingle(bounds_temp[1]));
 				
 				// Optional data
+				if (dict.ContainsKey("game_bounds")) {
+					var bounds_temp = (IList) dict["game_bounds"];
+					mod.bounds = new Vector2(System.Convert.ToSingle(bounds_temp[0]), System.Convert.ToSingle(bounds_temp[1]));
+				}
 				if (dict.ContainsKey("game_author"))
 					mod.author = (string) dict["game_author"];
 				// TODO: Icon
@@ -211,11 +247,4 @@ public class ModManagerScript : MonoBehaviour {
 			active_mod.SpawnGrabbables();
 		}
 	}
-	
-	/*
-	// Update is called once per frame
-	void Update () {
-	
-	}
-	*/
 }

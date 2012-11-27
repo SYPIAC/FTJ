@@ -3,7 +3,7 @@
     "game_author": "Wolfire Games",
     "game_icon": "Misc/icon.tga",
     "game_rules_path": "Misc/rules.txt",
-    "game_bounds": [200, 80],
+    "game_bounds": [170, 100],
     "max_players": 4,
     "min_players": 2,
 
@@ -32,7 +32,7 @@
 {
     "name": "Dice",
     "type": "dice",
-    "count": 4,
+    "count": 200,
     "pos": [0, 0]
 }
     ]
