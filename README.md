@@ -10,7 +10,7 @@
 
 In no particular order:
 
-- Move board definition and resources outside of Unity to allow for easier mods
+- Move board definition and resources outside of Unity to allow for easier mods (WIP)
 - Add additional mouse-based controls; all basic actions should be available with only mouse (ex. mouse wheel to rotate)
 - Add more objects to game. Additional dice (ex. d20), paper to write on, etc.
     - Perhaps some sort of "infinite" piles to supply dice, game currency / units, etc.
@@ -33,14 +33,22 @@ In no particular order:
     - YES - Remove current board resources from project
     - YES - Create file format for mod information
     - PARTIAL - Load mod information
-        - Dice and Board information loaded
+        - YES - Deck
+        - YES - Dice
+        - PARTIAL - Board
+        - NO - Tokens
     - PARTIAL - Spawn objects based on mod information
-        - Dice are spawned
-    - NO - Load textures from file
+        - YES - Deck
+        - YES - Dice
+        - NO - Board
+        - NO - Tokens
+    - YES - Load textures from file
+        - NO - Optimize 
     - NO - Enforce identical mods for networking
     - NO - Filter by mod in server list
     - NO - Add interface to choose desired mod (or perhaps just a more involved server setup step)
     - NO - Load additional assets (sounds, models) from file
+    - NO - Refactor the code
 
 ## Bugs
 
@@ -52,6 +60,7 @@ In no particular order:
 - Dice often end up at top of screen but not flat, so they cannot be read
 - Deck merging (using new right click feature) can cause decks to vanish / teleport with high latency (further testing required)
 - Shadows break in upper right corner
+- Assets are reloaded when you leave the server
 
 
 ## License
