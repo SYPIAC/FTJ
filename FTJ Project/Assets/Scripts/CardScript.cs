@@ -12,9 +12,9 @@ public class CardScript : MonoBehaviour {
 	[RPC]
 	public void PrepareLocal(int card_id) {
 		var card_back = transform.FindChild("Back").transform.FindChild("default");
-		card_back.renderer.material = CardManagerScript.Instance().GetBackMaterial(card_id);
+		card_back.renderer.material = ModManagerScript.Instance().GetCardBackMaterial(card_id);
 		var card_front = transform.FindChild("FrontBorder").transform.FindChild("default");
-		card_front.renderer.material = CardManagerScript.Instance().GetFrontMaterial(card_id);
+		card_front.renderer.material = ModManagerScript.Instance().GetCardFrontMaterial(card_id);
 		card_id_ = card_id;
 	}
 	

@@ -91,8 +91,12 @@ public class DeckScript : MonoBehaviour {
 		}
 	}
 	
-	// Use this for initialization
-	void Start () {
+	public void Fill(List<int> cards) {
+		cards_ = cards;
+		num_cards_ = cards_.Count;
+		RandomizeCards();
+		RegenerateEndCardIDs();
+		RegenerateEndCards();
 	}
 	
 	public void Fill(string deck_name){

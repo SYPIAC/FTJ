@@ -36,7 +36,6 @@ In no particular order:
         - Dice and Board information loaded
     - PARTIAL - Spawn objects based on mod information
         - Dice are spawned
-        - Coordinate system is off, needs to be scaled
     - NO - Load textures from file
     - NO - Enforce identical mods for networking
     - NO - Filter by mod in server list

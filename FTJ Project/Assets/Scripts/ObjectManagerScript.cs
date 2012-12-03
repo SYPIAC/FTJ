@@ -333,8 +333,8 @@ public class ObjectManagerScript : MonoBehaviour {
 				if(grabbable.rigidbody.velocity.magnitude > MAX_DICE_VEL){
 					grabbable.rigidbody.velocity = grabbable.rigidbody.velocity.normalized * MAX_DICE_VEL;
 				}
-				if(grabbable.GetComponent<DiceScript>()){
-					grabbable.rigidbody.angularVelocity = new Vector3(Random.Range(-1.0f,1.0f),Random.Range(-1.0f,1.0f),Random.Range(-1.0f,1.0f)) * DICE_ANG_SPEED;			
+				if(grabbable.GetComponent<DiceScript>() && grabbable.rigidbody.velocity.magnitude > 6f){
+					grabbable.rigidbody.angularVelocity = new Vector3(Random.Range(-1.0f,1.0f),Random.Range(-1.0f,1.0f),Random.Range(-1.0f,1.0f)) * DICE_ANG_SPEED;
 				}
 				grabbable.rigidbody.mass = 1.0f;
 				grabbable_script.held_by_player_ = -1;
@@ -478,8 +478,8 @@ public class ObjectManagerScript : MonoBehaviour {
 			}
 		}
 		held_rigidbody.AddForce((target_position - held_rigidbody.position) * Time.deltaTime * HOLD_FORCE * held_rigidbody.mass);
-		held_rigidbody.velocity *= HOLD_LINEAR_DAMPENING;			
-		held_rigidbody.angularVelocity *= HOLD_ANGULAR_DAMPENING;	
+		held_rigidbody.velocity *= HOLD_LINEAR_DAMPENING;
+		held_rigidbody.angularVelocity *= HOLD_ANGULAR_DAMPENING;
 		held_rigidbody.WakeUp();
 	}
 	

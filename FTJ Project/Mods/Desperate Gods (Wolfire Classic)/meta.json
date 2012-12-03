@@ -1,39 +1,45 @@
 {
-    "game_name": "Desperate Gods (Classic)",
-    "game_author": "Wolfire Games",
-    "game_icon": "Misc/icon.tga",
-    "game_rules_path": "Misc/rules.txt",
-    "game_bounds": [170, 100],
+    "name": "Desperate Gods (Classic)",
+    "author": "Wolfire Games",
+    "url": "http://www.wolfire.com/desperate-gods",
+    "icon": "Misc/icon.tga",
+    "rules_path": "Misc/rules.txt",
+    "bounds": [170, 100],
     "max_players": 4,
     "min_players": 2,
 
-    "objects": [
-{
-    "name": "Game Board",
-    "type": "board",
-    "texture": "Boards/board.tga",
-    "texture_n": "Boards/board_n.tga",
-    "size": [100, 40],
-    "pos": [0, -10]
-},
-{
-    "name": "Wilderness Deck",
-    "type": "deck",
-    "cards": {
-        "type": "folder",
-        "src": "Cards/Wilderness",
-        "filter": "",
-        "back": "Cards/backs/wilderness_back.tga"
+    "assets": {
+        "board": {
+            "type": "board",
+            "tex": "Boards/board.png",
+            "tex_n": "Boards/board_n.png",
+        },
+        "wilderness": {
+            "type": "deck",
+            "back": "Cards/backs/wilderness_back.png",
+            "cards": [
+                "Cards/wilderness/01.png",
+                "Cards/wilderness/02.png"
+            ]
+        }
     },
-    "rot": "horizontal",
-    "pos": [25, -20],
-    "scale": 1
-},
-{
-    "name": "Dice",
-    "type": "dice",
-    "count": 200,
-    "pos": [0, 0]
-}
+
+    "instances": [
+        {
+            "asset": "board",
+            "size": [100, 40],
+            "pos": [0, -10]
+        },
+        {
+            "asset": "wilderness",
+            "rot": "horizontal",
+            "pos": [25, -20],
+            "scale": 1
+        },
+        {
+            "asset": "d6",
+            "count": 4,
+            "pos": [0, 0]
+        }
     ]
 }

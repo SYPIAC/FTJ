@@ -15,19 +15,21 @@ namespace ModTypes {
 	
 	class Mod {
 		public string name, author, path;
+		public string base_directory;
 		public int min_players, max_players;
-		public Vector2 bounds = default_game_bounds;
+		public Vector2 bounds = default_bounds;
 		public Texture icon;  // TODO
-		public List<BaseObject> objects;
+		public Dictionary<string, BaseObject> assets;
+		public List<SpawnRule> instances;
 		
-		// Size of rendered area in engine units
+		// Approx. size of rendered area in engine units
 		private static Vector2 game_area = new Vector2(27.34592f, 16.28584f);
 		
-		// Default game_bounds in meta.json - game scale will appear unchanged when used
-		private static Vector2 default_game_bounds = new Vector2(170, 100);
+		// Default game_bounds in meta.json - scale of game objects (ex. dice) will appear unchanged when these bounds are used
+		private static Vector2 default_bounds = new Vector2(170, 100);
 		// Default scaling factor if meta.json uses the default game_bounds
 		private float default_scale =
-			Mathf.Min(game_area.x / default_game_bounds.x, game_area.y / default_game_bounds.y);
+			Mathf.Min(game_area.x / default_bounds.x, game_area.y / default_bounds.y);
 		
 		float GetScalingFactor() {
 			if (bounds.x <= 0 || bounds.y <= 0)
@@ -47,46 +49,73 @@ namespace ModTypes {
 			}
 			
 			// Spawn objects
-			foreach (var obj in objects) {
-				if (obj.prefab != null) {
-					obj.Spawn(scale);
-				}
+			foreach (var sr in instances) {
+				sr.Spawn(scale);
 			}
 		}
 		public void SpawnGrabbables() {
-			float scale = GetScalingFactor();
+			// TODO!!
+			/* float scale = GetScalingFactor();
 			foreach (var obj in objects) {
 				if (obj.GetType() != typeof(Board)) {  // TODO: More general approach
 					obj.Spawn(scale);
 				}
+			} */
+		}
+	}
+	
+	class SpawnRule {
+		public BaseObject asset;
+		public Vector3 pos, size, scale;  // Combine size / scale??
+		public Quaternion rot;
+		public string rot_str;  // Rotation can be provided as "horizontal", "vertical reversed", etc.
+		public int count = 1;
+		
+		public void Spawn(float scale) {
+			if (rot == null && rot_str != null)
+				rot = asset.GetRotation(rot_str);
+			
+			if (count > 1) {
+				int per_row = Mathf.FloorToInt(Mathf.Sqrt(count));
+				
+				var obj_size = asset.GetSize();
+				// Spacing is half object size
+				var offset_initial = new Vector3(1.5f * obj_size.x, 0, -1.5f * obj_size.z) *
+					(float) per_row / 2;
+				var offset_per_column = new Vector3(0, 0, 1.5f * obj_size.z);
+				var offset_per_row = new Vector3(-1.5f * obj_size.x, 0, 0);
+				
+				for (int i = 0; i < count; i++) {
+					asset.Spawn(scale, (pos != null ? pos * scale : Vector3.zero) + offset_initial +
+						offset_per_row * (i / per_row) + offset_per_column * (i % per_row),
+						size, rot);
+				}
+			} else {
+				// Assume count == 1
+				// TODO: Format pos test better
+				asset.Spawn(scale, pos != null ? pos * scale : Vector3.zero, size, rot);
 			}
 		}
 	}
 	
 	// Base classes for spawnable types
 	class BaseObject {
-		public GameObject prefab;
-		public string name, type;  // Name is not used yet
-		public Vector3 pos, size, scale;  // Size & scale overlap, remove one?
-		public Quaternion rot;  // Can be given as "horizontal", "vertical_reversed", etc.
+		public string type;
 		
-		virtual public void Spawn(float scale) { }
-		virtual public void SetRotation(Rotations orientation) {
+		virtual public void Spawn(float game_scale, Vector3 pos, Vector3 size, Quaternion rot) { }
+		virtual public Quaternion GetRotation(string orientation) {
+			// Converts a string-rotation representation into a quaternion
 			// TODO!
+			return Quaternion.identity;
+		}
+		virtual public Vector3 GetSize() {
+			// Used for grid-spawning
+			return new Vector3(1, 1, 1);
 		}
 	}
 	
-	class CardsCollection {
-		public string type;
-		public string src, back;
-	}
-	
-	class CardsCollectionFolder : CardsCollection {
-		public string filter;
-	}
-	
 	// Spawnable types
-	class Dice : BaseObject {
+	/* class Dice : BaseObject {
 		public int count;
 
 		override public void Spawn(float scale) {
@@ -98,45 +127,53 @@ namespace ModTypes {
 			var offset_per_column = new Vector3(0, 0, 1.5f * die_width);
 			var offset_per_row = new Vector3(-1.5f * die_width, 0, 0);
 			
-			var die_size = new Vector3(scale, scale, scale);
 			for (int i = 0; i < count; i++) {
 				var obj = Network.Instantiate(prefab, pos * scale + offset_initial +
 					offset_per_row * (i / dice_per_row) + offset_per_column * (i % dice_per_row), rot, 0) as GameObject;
-				obj.transform.localScale = die_size;
+				obj.transform.localScale = new Vector3(scale, scale, scale);
 			}
 		}
-	}
+	} */
 	
-	class Board : BaseObject {
+	/* class Board : BaseObject {
 		public string texture, texture_n;
 		
 		override public void Spawn(float scale) {
 			
 		}
-	}
+	} */
 	
 	class Deck : BaseObject {
-		public List<CardsCollection> cards;
-		public bool faceUp;
-	}
-	
-	class Card : BaseObject {
-		public string texture;
-		public bool faceUp;
+		public string tex_back;
+		public List<string> tex_cards;
+		public bool face_up = false;
+		
+		override public void Spawn(float game_scale, Vector3 pos, Vector3 size, Quaternion rot) {
+			// TODO!
+		}
+		override public Quaternion GetRotation(string orientation) {
+			// TODO!
+			return Quaternion.identity;
+		}
 	}
 }
 
 public class ModManagerScript : MonoBehaviour {
+	// TODO: Default assets
+	// d6, other dice
+	// tokens
 	public GameObject board_prefab;
 	public GameObject dice_prefab;
 	public GameObject token_prefab;
 	public GameObject deck_prefab;
 	public GameObject silver_coin_prefab;
 	public GameObject gold_coin_prefab;
+	
+	public Material default_card_front;
+	public Material default_card_back;
 
 	ModTypes.Mod active_mod;
 	List<ModTypes.Mod> mods;
-	List<ModTypes.Card> cards;
 	
 	// Use this for initialization
 	void Start () {
@@ -158,17 +195,21 @@ public class ModManagerScript : MonoBehaviour {
 			
 				var mod = new ModTypes.Mod();
 				
+				mod.base_directory = NormalizePath(Path.GetFullPath(dirpath));
+				
 				// Required data
 				// These exceptions (if any) will be caught by higher try/catch block and halt loading of this mod
-				mod.name = (string) dict["game_name"];
+				mod.name = (string) dict["name"];
 				
 				// Optional data
-				if (dict.ContainsKey("game_bounds")) {
-					var bounds_temp = (IList) dict["game_bounds"];
+				if (dict.ContainsKey("bounds")) {
+					var bounds_temp = (IList) dict["bounds"];
+					// TODO: Check length, must be two
 					mod.bounds = new Vector2(System.Convert.ToSingle(bounds_temp[0]), System.Convert.ToSingle(bounds_temp[1]));
 				}
-				if (dict.ContainsKey("game_author"))
-					mod.author = (string) dict["game_author"];
+				if (dict.ContainsKey("author"))
+					mod.author = (string) dict["author"];
+				// TODO: URL??
 				// TODO: Icon
 				// TODO: Rules path??
 				if (dict.ContainsKey("min_players"))
@@ -181,59 +222,199 @@ public class ModManagerScript : MonoBehaviour {
 				Debug.Log("Board: " + mod.bounds.x + " x " + mod.bounds.y);
 				Debug.Log(mod.min_players + " to " + mod.max_players + " players.");
 				
-				// Load object list
-				mod.objects = new List<ModTypes.BaseObject>();
-				var objects = (IList) dict["objects"];
-				foreach (var entry in objects) {
-					var entry_dict = (Dictionary<string, object>) entry;  // TODO: Catch exception
-					var obj_type = (string)entry_dict["type"];
-					ModTypes.BaseObject obj_generic = null;
-					if (obj_type == "board") {
+				// Load assets
+				mod.assets = new Dictionary<string, ModTypes.BaseObject>();
+				var assets = (Dictionary<string, object>) dict["assets"];
+				foreach (var asset_pair in assets) {
+					var name = asset_pair.Key;
+					var asset = (Dictionary<string, object>) asset_pair.Value;
+					var type = (string) asset["type"];
+					ModTypes.BaseObject generic = null;
+					/*if (type == "board") {
 						var board = new ModTypes.Board();
-						if (entry_dict.ContainsKey("texture"))
-							board.texture = (string) entry_dict["texture"];
-						if (entry_dict.ContainsKey("texture_n"))
-							board.texture_n = (string) entry_dict["texture_n"];
+						// TODO!
+						generic = board;
+					} else*/ if (type == "deck") {
+						var deck = new ModTypes.Deck();
 						
-						obj_generic = board;
-						obj_generic.prefab = board_prefab;
-						Debug.Log("Obj Board: tex: " + board.texture + ", tex_n: " + board.texture_n);
-					} else if (obj_type == "dice") {
-						var dice = new ModTypes.Dice();
-						if (entry_dict.ContainsKey("count"))
-							dice.count = System.Convert.ToInt32(entry_dict["count"]);
-						else
-							dice.count = 1;
+						if (asset.ContainsKey("face_up"))
+							deck.face_up = System.Convert.ToBoolean(asset["face_up"]);
 						
-						obj_generic = dice;
-						obj_generic.prefab = dice_prefab;
-						Debug.Log("Obj Dice: count: " + dice.count);
-					} else {
-						Debug.Log("Obj Unkown: type: " + obj_type);
+						deck.tex_back = (string) asset["back"];
+						deck.tex_cards = new List<string>();
+						var cards = (IList) asset["cards"];
+						foreach (var card_obj in cards) {
+							var card = (string) card_obj;
+							deck.tex_cards.Add(card);
+						}
+						
+						generic = deck;
+					}/* else if (type == "token") {
+						// TODO!
+					}*/ else {
+						Debug.Log("Unknown asset type \"" + type + "\", skipping.");
+						continue;
 					}
 					
-					if (obj_generic != null) {
-						// Read generic properties (pos, size, scale, rot)
-						if (entry_dict.ContainsKey("pos")) {
-							var pos_temp = (IList) entry_dict["pos"];
-							// Assume two-tuple for now
-							// TODO: Support three-tuple!
-							if (pos_temp.Count == 2) {
-								obj_generic.pos = new Vector3(System.Convert.ToSingle(pos_temp[0]), System.Convert.ToSingle(pos_temp[1]), 0);
-								Debug.Log("pos: " + obj_generic.pos.x + ", " + obj_generic.pos.y);
-							} else if (pos_temp.Count == 3) {
-								Debug.LogError("Three-component positions not yet supported");
-							}
+					if (generic != null)
+						mod.assets.Add(name, generic);
+					else
+						Debug.LogError("New asset is null!");
+				}
+				
+				// TODO: Remove
+				Debug.Log("Assets:");
+				foreach (var asset_pair in mod.assets) {
+					Debug.Log("-  " + asset_pair.Key);
+				}
+				
+				// Read instances
+				mod.instances = new List<ModTypes.SpawnRule>();
+				var instances = (IList) dict["instances"];
+				foreach (var instance_obj in instances) {
+					// TODO: Catch next-line exceptions
+					var instance = (Dictionary<string, object>) instance_obj;
+					
+					var sr = new ModTypes.SpawnRule();
+					
+					var asset_name = (string) instance["asset"];
+					var asset = GetAsset(mod.assets, asset_name);  // Gets default assets as well
+					if (asset == null) {
+						Debug.Log("No such asset: \"" + asset_name + "\"");
+						continue;
+					}
+					sr.asset = asset;
+					if (instance.ContainsKey("pos")) {
+						var pos_temp = (IList) instance["pos"];
+						// Assume two-tuple for now
+						// TODO: Support three-tuple!
+						if (pos_temp.Count == 2) {
+							sr.pos = new Vector3(System.Convert.ToSingle(pos_temp[0]), System.Convert.ToSingle(pos_temp[1]), 0);
+							Debug.Log("pos: " + sr.pos.x + ", " + sr.pos.y);
+						} else if (pos_temp.Count == 3) {
+							Debug.LogError("Three-component positions not yet supported");
 						}
-						// TODO: Size / Scale
-						// TODO: Rot
-						
-						mod.objects.Add(obj_generic);
+					}
+					// TODO: Size / Scale
+					// TODO: Rotation
+					// TODO: Count
+				}
+				
+				active_mod = mod;
+				
+				// TODO: Remove this test
+				foreach (var asset in mod.assets.Values) {
+					if (asset.GetType() == typeof(ModTypes.Deck)) {
+						foreach (var tex in ((ModTypes.Deck)asset).tex_cards) {
+							GetMaterial(tex);
+						}
 					}
 				}
-				active_mod = mod;
+				
+				// GetTexture("Raw_Content/_0000_icy_tower.png");
 			}
 		}
+	}
+	
+	Dictionary<string, ModTypes.BaseObject> defaultAssets = new Dictionary<string, ModTypes.BaseObject>();
+	
+	void InitializeDefaultAssets() {
+		// TODO: d6, tokens
+	}
+	
+	ModTypes.BaseObject GetAsset(Dictionary<string, ModTypes.BaseObject> user_defined_assets, string asset_name) {
+		// TODO: Refactor, this method shouldn't be here
+		if (user_defined_assets.ContainsKey(asset_name))
+			return user_defined_assets[asset_name];
+		return null;
+	}
+	
+	string NormalizePath(string path) {
+		// Ugly fix since Unity does not support paths with backslash separator
+		if (Application.platform == RuntimePlatform.WindowsPlayer ||
+			Application.platform == RuntimePlatform.WindowsEditor ||
+			Application.platform == RuntimePlatform.WindowsWebPlayer)  // This shouldn't matter on web, but...
+			path = path.Replace("\\", "/");
+		return path;
+	}
+	
+	bool CheckPath(string path) {
+		// Checks to see if a path is acceptable - that is, it must be within the active mod dir
+		// path must be normalized 
+		// TODO: Rename
+		// TODO: Test security!
+		return path.StartsWith(active_mod.base_directory);
+	}
+	
+	// private Dictionary<
+	private Dictionary<int, string> cardIdCache_;
+	private int nextCardId = 0;
+	private Dictionary<string, Texture2D> textureCache_ = new Dictionary<string, Texture2D>();
+	public Texture2D lastTex;
+	
+	void PreloadCard(string back, string front) {
+		// TODO
+		GetMaterial(back);
+		GetMaterial(front);
+	}
+	
+	Texture2D GetTexture(string path) {
+		if (active_mod == null)
+			return null;
+		
+		path = NormalizePath(Path.Combine(active_mod.base_directory, path));
+		
+		// Ensure path is valid and belongs to the active mod
+		if (!CheckPath(path))
+			return null;
+
+		Debug.Log("TexPath: " + path);
+
+		// Load from cache if possible
+		if (textureCache_.ContainsKey(path))
+			return textureCache_[path];
+		
+		// Load texture
+		// TODO: Threading
+		// TODO: Error checking, or just let it use the ? texture
+		var www = new WWW("file://" + path);
+		lastTex = www.texture;
+		Debug.Log(lastTex);
+		textureCache_[path] = lastTex;
+		return lastTex;
+	}
+	
+	private Dictionary<string, Material> materialCache_ = new Dictionary<string, Material>();
+	
+	// TODO: Refactor out isFront
+	Material GetMaterial(string path) {
+		return GetMaterial(path, default_card_front);
+	}
+	
+	Material GetMaterial(string path, Material base_mat) {
+		path = NormalizePath(Path.Combine(active_mod.base_directory, path));
+		
+		// Ensure path is valid and belongs to the active mod
+		if (!CheckPath(path))
+			return null;
+		
+		// Check cache
+		if (materialCache_.ContainsKey(path))
+			return materialCache_[path];
+		
+		// Load texture
+		var tex = GetTexture(path);
+		if (tex == null)
+			return null;
+		
+		// Create material
+		Material m = new Material(base_mat);
+		m.SetTexture("_MainTex", tex);
+		
+		// Update cache
+		materialCache_[path] = m;
+		
+		return m;
 	}
 	
 	public void SpawnActiveMod() {
@@ -246,5 +427,21 @@ public class ModManagerScript : MonoBehaviour {
 		if (networkView.isMine) { // Necessary?
 			active_mod.SpawnGrabbables();
 		}
+	}
+	
+	public static ModManagerScript Instance() {
+		if(GameObject.Find("GlobalScriptObject")){
+			return GameObject.Find("GlobalScriptObject").GetComponent<ModManagerScript>();
+		}
+		return null;
+	}
+	
+	public Material GetCardBackMaterial(int id){
+		// if (
+		return null;  // back_materials[cards_[id].back];
+	}
+	
+	public Material GetCardFrontMaterial(int id){
+		return null;  // cards_[id].material;
 	}
 }
