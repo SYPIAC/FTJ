@@ -157,9 +157,9 @@ namespace ModTypes {
 			if (orientation == "vertical") {
 				return Quaternion.Euler(0, 180, 0);
 			} else if (orientation == "horizontal") {
-				return Quaternion.Euler(0, 90, 0);  // Card top faces left
-			} else if (orientation == "horizontal_reversed") {
 				return Quaternion.Euler(0, 270, 0);  // Card top faces right
+			} else if (orientation == "horizontal_reversed") {
+				return Quaternion.Euler(0, 90, 0);  // Card top faces left
 			} else {
 				return Quaternion.identity;
 			}
