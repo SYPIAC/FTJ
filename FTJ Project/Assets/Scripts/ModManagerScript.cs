@@ -66,8 +66,8 @@ namespace ModTypes {
 	
 	class SpawnRule {
 		public BaseObject asset;
-		public Vector3 pos, size, scale;  // Combine size / scale??
-		public Quaternion rot;
+		public Vector3 pos = Vector3.zero, size = Vector3.one, scale = Vector3.one;  // Combine size / scale??
+		public Quaternion rot = Quaternion.identity;
 		public string rot_str;  // Rotation can be provided as "horizontal", "vertical reversed", etc.
 		public int count = 1;
 		
@@ -93,6 +93,7 @@ namespace ModTypes {
 			} else {
 				// Assume count == 1
 				// TODO: Format pos test better
+				Debug.Log("Spawn type " + asset.GetType().ToString());
 				asset.Spawn(scale, pos != null ? pos * scale : Vector3.zero, size, rot);
 			}
 		}
@@ -148,8 +149,16 @@ namespace ModTypes {
 		public List<string> tex_cards;
 		public bool face_up = false;
 		
+		public List<int> card_ids;
+		
 		override public void Spawn(float game_scale, Vector3 pos, Vector3 size, Quaternion rot) {
-			// TODO!
+			Debug.Log("Spawn deck.");
+			// TODO: Refactor location of deck_prefab (should not be in ModManagerScript)
+			GameObject deck_object = (GameObject)Network.Instantiate(ModManagerScript.Instance().deck_prefab, pos, rot, 0);
+			if (size != Vector3.one) {
+				// TODO: Scale
+			}
+			deck_object.GetComponent<DeckScript>().Fill(card_ids);
 		}
 		override public Quaternion GetRotation(string orientation) {
 			// TODO!
@@ -289,7 +298,7 @@ public class ModManagerScript : MonoBehaviour {
 						// Assume two-tuple for now
 						// TODO: Support three-tuple!
 						if (pos_temp.Count == 2) {
-							sr.pos = new Vector3(System.Convert.ToSingle(pos_temp[0]), System.Convert.ToSingle(pos_temp[1]), 0);
+							sr.pos = new Vector3(-System.Convert.ToSingle(pos_temp[0]), 0, -System.Convert.ToSingle(pos_temp[1]));
 							Debug.Log("pos: " + sr.pos.x + ", " + sr.pos.y);
 						} else if (pos_temp.Count == 3) {
 							Debug.LogError("Three-component positions not yet supported");
@@ -298,9 +307,13 @@ public class ModManagerScript : MonoBehaviour {
 					// TODO: Size / Scale
 					// TODO: Rotation
 					// TODO: Count
+
+					mod.instances.Add(sr);
 				}
 				
-				active_mod = mod;
+				mods.Add(mod);
+				SelectMod(mods.Count - 1);
+				/*active_mod = mod;
 				
 				// TODO: Remove this test
 				foreach (var asset in mod.assets.Values) {
@@ -309,7 +322,7 @@ public class ModManagerScript : MonoBehaviour {
 							GetMaterial(tex);
 						}
 					}
-				}
+				}*/
 				
 				// GetTexture("Raw_Content/_0000_icy_tower.png");
 			}
@@ -320,6 +333,7 @@ public class ModManagerScript : MonoBehaviour {
 	
 	void InitializeDefaultAssets() {
 		// TODO: d6, tokens
+		// TODO: Refactor
 	}
 	
 	ModTypes.BaseObject GetAsset(Dictionary<string, ModTypes.BaseObject> user_defined_assets, string asset_name) {
@@ -346,8 +360,42 @@ public class ModManagerScript : MonoBehaviour {
 		return path.StartsWith(active_mod.base_directory);
 	}
 	
+	public bool SelectMod(int mod_id) {
+		if (mods.Count <= mod_id || mod_id < 0)
+			return false;
+		
+		active_mod = mods[mod_id];
+		cardIdCache_ = new Dictionary<KeyValuePair<string, string>, int>();
+		cardFronts_ = new Dictionary<int, Material>();
+		cardBacks_ = new Dictionary<int, Material>();
+		nextCardId = 0;
+		textureCache_ = new Dictionary<string, Texture2D>();
+		materialCache_ = new Dictionary<string, Material>();
+		
+		foreach (var asset in active_mod.assets.Values) {
+			if (asset.GetType() == typeof(ModTypes.Deck)) {
+				var deck = ((ModTypes.Deck)asset);
+				deck.card_ids = new List<int>();
+				foreach (var tex in deck.tex_cards) {
+					// TODO: Use cache
+					cardFronts_.Add(nextCardId, GetMaterial(tex));
+					cardBacks_.Add(nextCardId, GetMaterial(deck.tex_back));
+					
+					deck.card_ids.Add(nextCardId);
+					
+					++nextCardId;
+				}
+			}
+		}
+		
+		return true;
+	}
+	
 	// private Dictionary<
-	private Dictionary<int, string> cardIdCache_;
+	private Dictionary<KeyValuePair<string, string>, int> cardIdCache_;
+	private Dictionary<int, Material> cardFronts_;
+	private Dictionary<int, Material> cardBacks_;
+	// private Dictionary<int, string> cardIdCache_;
 	private int nextCardId = 0;
 	private Dictionary<string, Texture2D> textureCache_ = new Dictionary<string, Texture2D>();
 	public Texture2D lastTex;
@@ -437,11 +485,14 @@ public class ModManagerScript : MonoBehaviour {
 	}
 	
 	public Material GetCardBackMaterial(int id){
-		// if (
-		return null;  // back_materials[cards_[id].back];
+		if (cardBacks_.ContainsKey(id))
+			return cardBacks_[id];
+		return null;
 	}
 	
 	public Material GetCardFrontMaterial(int id){
-		return null;  // cards_[id].material;
+		if (cardFronts_.ContainsKey(id))
+			return cardFronts_[id];
+		return null;
 	}
 }

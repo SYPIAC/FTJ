@@ -33,7 +33,7 @@
         {
             "asset": "wilderness",
             "rot": "horizontal",
-            "pos": [25, -20],
+            "pos": [0, 0],
             "scale": 1
         },
         {
