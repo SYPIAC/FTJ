@@ -28,12 +28,13 @@ namespace ModTypes {
 		// Default game_bounds in meta.json - scale of game objects (ex. dice) will appear unchanged when these bounds are used
 		private static Vector2 default_bounds = new Vector2(170, 100);
 		// Default scaling factor if meta.json uses the default game_bounds
-		private float default_scale =
-			Mathf.Min(game_area.x / default_bounds.x, game_area.y / default_bounds.y);
+		private float default_scale = Mathf.Min(game_area.x / default_bounds.x, game_area.y / default_bounds.y);
 		
 		float GetScalingFactor() {
-			if (bounds.x <= 0 || bounds.y <= 0)
+			if (bounds.x <= 0 || bounds.y <= 0) {
+				Debug.Log("Invalid game bounds of " + bounds.x.ToString() + ", " + bounds.y.ToString() + "!");  // TODO
 				return 1;
+			}
 			float scale_x = game_area.x / bounds.x;
 			float scale_y = game_area.y / bounds.y;
 			// Division by default_scale will result in 1 when default game bounds are used
@@ -42,6 +43,7 @@ namespace ModTypes {
 		
 		public void Spawn() {
 			float scale = GetScalingFactor();
+			Debug.Log("Game scale: " + scale);
 			
 			// Adjust table tiling (at default scale it is 4)
 			if (scale > 0) {
@@ -50,7 +52,7 @@ namespace ModTypes {
 			
 			// Spawn objects
 			foreach (var sr in instances) {
-				sr.Spawn(scale);
+				sr.Spawn(scale, default_scale);
 			}
 		}
 		public void SpawnGrabbables() {
@@ -71,8 +73,8 @@ namespace ModTypes {
 		public string rot_str;  // Rotation can be provided as "horizontal", "vertical reversed", etc.
 		public int count = 1;
 		
-		public void Spawn(float scale) {
-			if (rot == null && rot_str != null)
+		public void Spawn(float scale, float default_scale) {
+			if (rot_str != null)
 				rot = asset.GetRotation(rot_str);
 			
 			if (count > 1) {
@@ -86,7 +88,7 @@ namespace ModTypes {
 				var offset_per_row = new Vector3(-1.5f * obj_size.x, 0, 0);
 				
 				for (int i = 0; i < count; i++) {
-					asset.Spawn(scale, (pos != null ? pos * scale : Vector3.zero) + offset_initial +
+					asset.Spawn(scale, (pos != null ? pos * scale * default_scale : Vector3.zero) + offset_initial +
 						offset_per_row * (i / per_row) + offset_per_column * (i % per_row),
 						size, rot);
 				}
@@ -94,7 +96,7 @@ namespace ModTypes {
 				// Assume count == 1
 				// TODO: Format pos test better
 				Debug.Log("Spawn type " + asset.GetType().ToString());
-				asset.Spawn(scale, pos != null ? pos * scale : Vector3.zero, size, rot);
+				asset.Spawn(scale, pos != null ? pos * scale * default_scale : Vector3.zero, size, rot);
 			}
 		}
 	}
@@ -116,25 +118,15 @@ namespace ModTypes {
 	}
 	
 	// Spawnable types
-	/* class Dice : BaseObject {
-		public int count;
-
-		override public void Spawn(float scale) {
-			// Determine number of columns (always have fewer rows than columns)
-			var dice_per_row = Mathf.FloorToInt(Mathf.Sqrt(count));
-			
-			var die_width = 0.4f * scale;  // Dice physics width is 0.4
-			var offset_initial = new Vector3(1.5f, 0, -1.5f) * die_width * (int)(dice_per_row / 2);
-			var offset_per_column = new Vector3(0, 0, 1.5f * die_width);
-			var offset_per_row = new Vector3(-1.5f * die_width, 0, 0);
-			
-			for (int i = 0; i < count; i++) {
-				var obj = Network.Instantiate(prefab, pos * scale + offset_initial +
-					offset_per_row * (i / dice_per_row) + offset_per_column * (i % dice_per_row), rot, 0) as GameObject;
-				obj.transform.localScale = new Vector3(scale, scale, scale);
+	class Dice : BaseObject {
+		override public void Spawn(float game_scale, Vector3 pos, Vector3 size, Quaternion rot) {
+			Debug.Log("Spawn dice.");
+			var dice_object = (GameObject)Network.Instantiate(ModManagerScript.Instance().dice_prefab, pos, rot, 0);
+			if (size != Vector3.one) {
+				dice_object.transform.localScale = size;  // TODO: Multiply, not override
 			}
 		}
-	} */
+	}
 	
 	/* class Board : BaseObject {
 		public string texture, texture_n;
@@ -156,13 +148,25 @@ namespace ModTypes {
 			// TODO: Refactor location of deck_prefab (should not be in ModManagerScript)
 			GameObject deck_object = (GameObject)Network.Instantiate(ModManagerScript.Instance().deck_prefab, pos, rot, 0);
 			if (size != Vector3.one) {
-				// TODO: Scale
+				deck_object.transform.localScale = size;  // TODO: Multiply, not override
 			}
 			deck_object.GetComponent<DeckScript>().Fill(card_ids);
 		}
 		override public Quaternion GetRotation(string orientation) {
 			// TODO!
-			return Quaternion.identity;
+			if (orientation == "vertical") {
+				return Quaternion.Euler(0, 180, 0);
+			} else if (orientation == "horizontal") {
+				return Quaternion.Euler(0, 90, 0);  // Card top faces left
+			} else if (orientation == "horizontal_reversed") {
+				return Quaternion.Euler(0, 270, 0);  // Card top faces right
+			} else {
+				return Quaternion.identity;
+			}
+		}
+		override public Vector3 GetSize() {
+			// TODO: Determine dynamically in grid spawn method
+			return new Vector3(1.5f, 0, 2f);
 		}
 	}
 }
@@ -186,6 +190,8 @@ public class ModManagerScript : MonoBehaviour {
 	
 	// Use this for initialization
 	void Start () {
+		InitializeDefaultAssets();  // TODO: Refactor
+		
 		mods = new List<ModTypes.Mod>();
 
 		Debug.Log("Scanning for mods");
@@ -306,7 +312,26 @@ public class ModManagerScript : MonoBehaviour {
 					}
 					// TODO: Size / Scale
 					// TODO: Rotation
+					if (instance.ContainsKey("rot")) {
+						// Try a list
+						try {
+							var rot_list = (IList) instance["rot"];
+							if (rot_list.Count == 3) {
+								sr.rot = Quaternion.Euler(System.Convert.ToSingle(rot_list[0]),
+									System.Convert.ToSingle(rot_list[1]), System.Convert.ToSingle(rot_list[2]));
+							} else if (rot_list.Count == 4) {
+								// TODO: Quaternion
+								sr.rot = new Quaternion(System.Convert.ToSingle(rot_list[0]), System.Convert.ToSingle(rot_list[1]),
+									System.Convert.ToSingle(rot_list[2]), System.Convert.ToSingle(rot_list[3]));
+							}
+						} catch (System.InvalidCastException) {
+							// Interpret as string
+							sr.rot_str = (string) instance["rot"];
+						}
+					}
 					// TODO: Count
+					if (instance.ContainsKey("count"))
+						sr.count = System.Convert.ToInt32(instance["count"]);
 
 					mod.instances.Add(sr);
 				}
@@ -334,12 +359,16 @@ public class ModManagerScript : MonoBehaviour {
 	void InitializeDefaultAssets() {
 		// TODO: d6, tokens
 		// TODO: Refactor
+		
+		defaultAssets["d6"] = new ModTypes.Dice();
 	}
 	
 	ModTypes.BaseObject GetAsset(Dictionary<string, ModTypes.BaseObject> user_defined_assets, string asset_name) {
 		// TODO: Refactor, this method shouldn't be here
 		if (user_defined_assets.ContainsKey(asset_name))
 			return user_defined_assets[asset_name];
+		if (defaultAssets.ContainsKey(asset_name))
+			return defaultAssets[asset_name];
 		return null;
 	}
 	

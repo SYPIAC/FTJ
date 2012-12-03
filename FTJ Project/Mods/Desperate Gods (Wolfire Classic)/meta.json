@@ -100,17 +100,18 @@
             "asset": "wilderness",
             "rot": "horizontal",
             "pos": [0, 0],
-            "scale": 1
+            "scale": 1,
+            "count": 4
         },
         {
             "asset": "town",
             "rot": "horizontal",
-            "pos": [-10, 10]
+            "pos": [-70, 00]
         }
         {
             "asset": "d6",
             "count": 4,
-            "pos": [0, 0]
+            "pos": [0, -25]
         }
     ]
 }

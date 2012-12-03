@@ -92,7 +92,7 @@ public class DeckScript : MonoBehaviour {
 	}
 	
 	public void Fill(List<int> cards) {
-		cards_ = cards;
+		cards_ = new List<int>(cards);
 		num_cards_ = cards_.Count;
 		RandomizeCards();
 		RegenerateEndCardIDs();
