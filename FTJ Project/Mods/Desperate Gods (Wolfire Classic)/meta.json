@@ -99,19 +99,32 @@
         {
             "asset": "wilderness",
             "rot": "horizontal",
-            "pos": [0, 0],
-            "scale": 1,
-            "count": 4
+            "pos": [14, 38],
+        },
+        {
+            "asset": "dungeon1",
+            "rot": "horizontal",
+            "pos": [14, 25],
+        },
+        {
+            "asset": "dungeon2",
+            "rot": "horizontal",
+            "pos": [14, 12],
+        },
+        {
+            "asset": "dungeon3",
+            "rot": "horizontal",
+            "pos": [14, 0],
         },
         {
             "asset": "town",
-            "rot": "horizontal",
-            "pos": [-70, 00]
+            "rot": "vertical",
+            "pos": [40, -8]
         }
         {
             "asset": "d6",
             "count": 4,
-            "pos": [0, -25]
+            "pos": [-60, -25]
         }
     ]
 }
