@@ -11,15 +11,81 @@
     "assets": {
         "board": {
             "type": "board",
-            "tex": "Boards/board.png",
-            "tex_n": "Boards/board_n.png",
+            "tex": "boards/board.png",
+            "tex_n": "boards/board_n.png",
         },
         "wilderness": {
             "type": "deck",
-            "back": "Cards/backs/wilderness_back.png",
+            "back": "cards/backs/card_back_nature.png",
             "cards": [
-                "Cards/wilderness/01.png",
-                "Cards/wilderness/02.png"
+                "cards/wilderness/0.png",
+                "cards/wilderness/1.png",
+                "cards/wilderness/2.png",
+                "cards/wilderness/3.png",
+                "cards/wilderness/4.png",
+                "cards/wilderness/5.png",
+                "cards/wilderness/6.png"
+            ]
+        },
+        "dungeon1": {
+            "type": "deck",
+            "back": "cards/backs/card_back_dungeon_1.png",
+            "cards": [
+                "cards/dungeon1/7.png",
+                "cards/dungeon1/8.png",
+                "cards/dungeon1/9.png",
+                "cards/dungeon1/10.png",
+                "cards/dungeon1/11.png",
+                "cards/dungeon1/12.png",
+                "cards/dungeon1/13.png"
+            ]
+        },
+        "dungeon2": {
+            "type": "deck",
+            "back": "cards/backs/card_back_dungeon_2.png",
+            "cards": [
+                "cards/dungeon2/14.png",
+                "cards/dungeon2/15.png",
+                "cards/dungeon2/16.png",
+                "cards/dungeon2/17.png",
+                "cards/dungeon2/18.png",
+                "cards/dungeon2/19.png",
+                "cards/dungeon2/20.png"
+            ]
+        },
+        "dungeon3": {
+            "type": "deck",
+            "back": "cards/backs/card_back_dungeon_3.png",
+            "cards": [
+                "cards/dungeon3/21.png",
+                "cards/dungeon3/22.png",
+                "cards/dungeon3/23.png",
+                "cards/dungeon3/24.png",
+                "cards/dungeon3/25.png",
+                "cards/dungeon3/26.png"
+            ]
+        },
+        "town": {
+            "type": "deck",
+            "back": "cards/backs/card_back_town.png",
+            "cards": [
+                "cards/town/27.png",
+                "cards/town/27.png",
+                "cards/town/27.png",
+                "cards/town/28.png",
+                "cards/town/28.png",
+                "cards/town/29.png",
+                "cards/town/30.png",
+                "cards/town/31.png",
+                "cards/town/32.png",
+                "cards/town/32.png",
+                "cards/town/33.png",
+                "cards/town/34.png",
+                "cards/town/35.png",
+                "cards/town/36.png",
+                "cards/town/37.png",
+                "cards/town/38.png",
+                "cards/town/39.png"
             ]
         }
     },
@@ -36,6 +102,11 @@
             "pos": [0, 0],
             "scale": 1
         },
+        {
+            "asset": "town",
+            "rot": "horizontal",
+            "pos": [-10, 10]
+        }
         {
             "asset": "d6",
             "count": 4,
