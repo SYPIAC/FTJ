@@ -105,8 +105,6 @@ namespace ModTypes {
 	
 	// Base classes for spawnable types
 	class BaseObject {
-		public string type;
-		
 		virtual public void Spawn(float game_scale, Vector3 pos, Vector3 size, Quaternion rot) { }
 		virtual public Quaternion GetRotation(string orientation) {
 			// Converts a string-rotation representation into a quaternion
@@ -118,7 +116,8 @@ namespace ModTypes {
 			return new Vector3(1, 1, 1);
 		}
 		virtual public List<string> GetResourceNames() {
-			return null;
+			Debug.LogWarning("Call to default BaseObject.GetResourceNames");
+			return new List<string>();
 		}
 	}
 	
@@ -157,12 +156,42 @@ namespace ModTypes {
 	class BuiltinToken : BaseObject {
 	}
 	
+	class Dice : BaseObject {
+		public string model;
+		public float model_scale;
+		public string tex, tex_n;
+		public string physics_type, physics_model;  // Only physics_type "model" is supported right now
+		
+		override public void Spawn(float game_scale, Vector3 pos, Vector3 size, Quaternion rot) {
+			Debug.Log("Spawn dice.");
+			// TODO: Refactor location of prefab (should not be in ModManagerScript)
+			ModManagerScript mod_manager = ModManagerScript.Instance();
+			GameObject dice_object = (GameObject)Network.Instantiate(mod_manager.dice_prefab, pos, rot, 0);
+			if (size != Vector3.one) {
+				dice_object.transform.localScale = size;  // TODO: Multiply, not override
+			}
+			dice_object.GetComponent<DiceScript>().SetModel(mod_manager.GetStringId(model),
+				mod_manager.GetStringId(tex), mod_manager.GetStringId(tex_n));
+		}
+		override public Vector3 GetSize() {
+			// TODO: Determine dynamically in grid spawn method
+			return new Vector3(0.4f, 0.4f, 0.4f);
+		}
+		override public List<string> GetResourceNames() {
+			// TODO: Improve efficiency
+			var res = new List<string>();
+			res.Add(model);
+			res.Add(tex);
+			res.Add(tex_n);
+			res.Add(physics_model);
+			return res;
+		}
+	}
+	
 	class Deck : BaseObject {
 		public string tex_back;
 		public List<string> tex_cards;
 		public bool face_up = false;
-		
-		public List<int> card_ids;
 		
 		override public void Spawn(float game_scale, Vector3 pos, Vector3 size, Quaternion rot) {
 			Debug.Log("Spawn deck.");
@@ -250,7 +279,7 @@ public class ModManagerScript : MonoBehaviour {
 			
 				var mod = new ModTypes.Mod();
 				
-				mod.base_directory = NormalizePath(Path.GetFullPath(dirpath));
+				mod.base_directory = NormalizeAbsolutePath(Path.GetFullPath(dirpath));
 				
 				// Required data
 				// These exceptions (if any) will be caught by higher try/catch block and halt loading of this mod
@@ -395,6 +424,7 @@ public class ModManagerScript : MonoBehaviour {
 	}
 	
 	Dictionary<string, ModTypes.BaseObject> defaultAssets;
+	List<string> defaultAssetKeys;
 	
 	void InitializeDefaultAssets() {
 		// TODO: Add more default assets
@@ -403,17 +433,29 @@ public class ModManagerScript : MonoBehaviour {
 			return;
 		
 		defaultAssets = new Dictionary<string, ModTypes.BaseObject>() {
-			{ "d6", new ModTypes.Prefab{prefab=dice_prefab} },  // ModTypes.Dice() },
+			// TODO: Remove physics model for d6, use box collider
+			{ "d6", new ModTypes.Dice{model="asset://models/d6", model_scale=0.005f, tex="asset://textures/d6_c", tex_n="asset://textures/d6_n", physics_type="box", physics_model="asset://models/d6"} },
+			{ "d8", new ModTypes.Dice{model="asset://models/d8", model_scale=0.005f, tex="asset://textures/d8_c", physics_type="model", physics_model="asset://models/d8"} },
 			{ "token_cleric", new ModTypes.Prefab{prefab=token_cleric} },
 			{ "token_knight", new ModTypes.Prefab{prefab=token_knight} },
 			{ "token_ranger", new ModTypes.Prefab{prefab=token_ranger} },
 			{ "token_thief", new ModTypes.Prefab{prefab=token_thief} },
-			{ "token_wizard", new ModTypes.Prefab{prefab=token_wizard} },
+			{ "token_wizard", new ModTypes.Prefab{prefab=token_wizard} }
 			// at least d4, d8, d12, d20
 			// five types of player tokens
 			// gold and silver coins
 			// health tokens
 			// standard 52-card deck
+		};
+		// TODO: Automate
+		defaultAssetKeys = new List<string>(){
+			"d6",
+			"d8",
+			"token_cleric",
+			"token_knight",
+			"token_ranger",
+			"token_thief",
+			"token_wizard"
 		};
 	}
 	
@@ -429,9 +471,9 @@ public class ModManagerScript : MonoBehaviour {
 	// String IDs are used for networking to speed up initial join
 	// The clients should all generate the same dictionaries and a hash will be used to verify
 	Dictionary<string, int> stringIds;
-	Dictionary<int, string> stringIds_reverse;
+	public Dictionary<int, string> stringIds_reverse;
 	
-	string NormalizePath(string path) {
+	string NormalizeAbsolutePath(string path) {
 		// Ugly fix since Unity does not support paths with backslash separator
 		if (Application.platform == RuntimePlatform.WindowsPlayer ||
 			Application.platform == RuntimePlatform.WindowsEditor ||
@@ -440,12 +482,18 @@ public class ModManagerScript : MonoBehaviour {
 		return path;
 	}
 	
+	string NormalizeRelativePath(string path) {
+		if (!path.StartsWith("asset://"))
+			path = Path.Combine(active_mod.base_directory, path);
+		return NormalizeAbsolutePath(path);
+	}
+	
 	bool CheckPath(string path) {
 		// Checks to see if a path is acceptable - that is, it must be within the active mod dir
 		// path must be normalized 
 		// TODO: Rename
 		// TODO: Test security!
-		return path.StartsWith(active_mod.base_directory);
+		return path.StartsWith("asset://") || path.StartsWith(active_mod.base_directory);
 	}
 	
 	public int GetStringId(string s) {
@@ -465,24 +513,31 @@ public class ModManagerScript : MonoBehaviour {
 		stringIds_reverse = new Dictionary<int, string>();
 		var currentStringId = 0;
 		
-		foreach (var asset in active_mod.assets.Values) {
-			// General
-			// Generate string ids
+		// Generate string ids for default assets
+		foreach (string key in defaultAssetKeys) {
+			var asset = defaultAssets[key];
 			foreach (string path in asset.GetResourceNames()) {
+				if (path == null)
+					continue;
 				if (stringIds.ContainsKey(path))
 					continue;
 				stringIds[path] = currentStringId;
 				stringIds_reverse[currentStringId] = path;
 				++currentStringId;
 			}
-			
-			// Type-specific code
-			/*
-			var type = asset.GetType();
-			if (type == typeof(ModTypes.Deck)) {
-				var deck = ((ModTypes.Deck)asset);
+		}
+		
+		// Generate string ids for mod assets
+		foreach (var asset in active_mod.assets.Values) {
+			foreach (string path in asset.GetResourceNames()) {
+				if (path == null)
+					continue;
+				if (stringIds.ContainsKey(path))
+					continue;
+				stringIds[path] = currentStringId;
+				stringIds_reverse[currentStringId] = path;
+				++currentStringId;
 			}
-			*/
 		}
 		
 		return true;
@@ -498,10 +553,7 @@ public class ModManagerScript : MonoBehaviour {
 	}
 	
 	Texture2D GetTexture(string path) {
-		if (active_mod == null)
-			return null;
-		
-		path = NormalizePath(Path.Combine(active_mod.base_directory, path));
+		path = NormalizeRelativePath(path);
 		
 		// Ensure path is valid and belongs to the active mod
 		if (!CheckPath(path))
@@ -513,14 +565,20 @@ public class ModManagerScript : MonoBehaviour {
 		if (textureCache_.ContainsKey(path))
 			return textureCache_[path];
 		
-		// Load texture
-		// TODO: Threading
-		// TODO: Error checking, or just let it use the ? texture
-		var www = new WWW("file://" + path);
-		lastTex = www.texture;
-		Debug.Log(lastTex);
-		textureCache_[path] = lastTex;
-		return lastTex;
+		if (path.StartsWith("asset://")) {
+			// Load internal texture asset
+			Debug.Log("Loading internal texture: " + path.Substring(8));
+			return (Texture2D) Resources.Load(path.Substring(8), typeof(Texture2D));
+		} else {
+			// Load external texture
+			// TODO: Threading
+			// TODO: Error checking, or just let it use the ? texture
+			var www = new WWW("file://" + path);
+			lastTex = www.texture;
+			Debug.Log(lastTex);
+			textureCache_[path] = lastTex;
+			return lastTex;
+		}
 	}
 	
 	private Dictionary<string, Material> materialCache_ = new Dictionary<string, Material>();
@@ -531,27 +589,55 @@ public class ModManagerScript : MonoBehaviour {
 	}
 	
 	Material GetMaterial(string path, Material base_mat) {
-		path = NormalizePath(Path.Combine(active_mod.base_directory, path));
+		var path1 = NormalizeRelativePath(path);
+		
+		// Ensure path is valid and belongs to the active mod
+		if (!CheckPath(path1))
+			return null;
+		
+		// Check cache
+		if (materialCache_.ContainsKey(path1))
+			return materialCache_[path1];
+		
+		Texture2D tex = GetTexture(path);
+				
+		Material m = null;
+		
+		if (tex != null) {
+			// Create material
+			m = new Material(base_mat);
+			m.SetTexture("_MainTex", tex);
+		}
+		
+		// Update cache
+		materialCache_[path1] = m;
+		
+		return m;
+	}
+	
+	private Dictionary<string, Mesh> meshCache_ = new Dictionary<string, Mesh>();
+	
+	Mesh GetMesh(string path) {
+		Debug.Log("GetMesh1 path " + path);
+		path = NormalizeRelativePath(path);
+		Debug.Log("GetMesh2 path " + path);
 		
 		// Ensure path is valid and belongs to the active mod
 		if (!CheckPath(path))
 			return null;
 		
 		// Check cache
-		if (materialCache_.ContainsKey(path))
-			return materialCache_[path];
+		if (meshCache_.ContainsKey(path))
+			return meshCache_[path];
 		
-		// Load texture
-		var tex = GetTexture(path);
-		if (tex == null)
-			return null;
+		Mesh m = null;
 		
-		// Create material
-		Material m = new Material(base_mat);
-		m.SetTexture("_MainTex", tex);
+		if (path.StartsWith("asset://")) {
+			Debug.Log("Loading internal mesh: " + path.Substring(8));
+			m = (Mesh) Resources.Load(path.Substring(8), typeof(Mesh));
+		}
 		
-		// Update cache
-		materialCache_[path] = m;
+		meshCache_[path] = m;
 		
 		return m;
 	}
@@ -575,9 +661,21 @@ public class ModManagerScript : MonoBehaviour {
 		return null;
 	}
 	
-	public Material GetMaterial(int id){
+	public Texture2D GetTexture(int id) {
+		if (stringIds_reverse.ContainsKey(id))
+			return GetTexture(stringIds_reverse[id]);
+		return null;
+	}
+	
+	public Material GetMaterial(int id) {
 		if (stringIds_reverse.ContainsKey(id))
 			return GetMaterial(stringIds_reverse[id]);
+		return null;
+	}
+	
+	public Mesh GetMesh(int id) {
+		if (stringIds_reverse.ContainsKey(id))
+			return GetMesh(stringIds_reverse[id]);
 		return null;
 	}
 }
