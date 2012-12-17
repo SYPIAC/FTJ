@@ -87,6 +87,21 @@
                 "cards/town/38.png",
                 "cards/town/39.png"
             ]
+        },
+        "custom_d4": {
+            "type": "dice",
+            "model": "dice/d4.obj",
+            "model_scale": 0.005,
+            "tex": "dice/d4.png",
+            "tex_n": "dice/d4_n.png",
+            "phsyics": "model",
+            "physics_model": "dice/d4.obj"
+        },
+        "retextured_d6": {
+            "type": "dice",
+            "model": "asset://d6",
+            "tex": "dice/d6.png",
+            "physics": "box"
         }
     },
 
@@ -95,6 +110,10 @@
             "asset": "board",
             "size": [100, 40],
             "pos": [0, -10]
+        },
+        {
+            "asset": "token_knight",
+            "pos": [-40, 0]
         },
         {
             "asset": "wilderness",
