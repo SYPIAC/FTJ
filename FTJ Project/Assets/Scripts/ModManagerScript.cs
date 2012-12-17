@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using MiniJSON;
 // using JsonFx.Json;
 
@@ -21,6 +22,7 @@ namespace ModTypes {
 		public Texture icon;  // TODO
 		public Dictionary<string, BaseObject> assets;
 		public List<SpawnRule> instances;
+		public string version, sha1;
 		
 		// Approx. size of rendered area in engine units
 		private static Vector2 game_area = new Vector2(27.34592f, 16.28584f);
@@ -88,7 +90,7 @@ namespace ModTypes {
 				var offset_per_row = new Vector3(-1.5f * obj_size.x, 0, 0);
 				
 				for (int i = 0; i < count; i++) {
-					asset.Spawn(scale, (pos != null ? pos * scale * default_scale : Vector3.zero) + offset_initial +
+					asset.Spawn(scale, pos * scale * default_scale + offset_initial +
 						offset_per_row * (i / per_row) + offset_per_column * (i % per_row),
 						size, rot);
 				}
@@ -96,7 +98,7 @@ namespace ModTypes {
 				// Assume count == 1
 				// TODO: Format pos test better
 				Debug.Log("Spawn type " + asset.GetType().ToString());
-				asset.Spawn(scale, pos != null ? pos * scale * default_scale : Vector3.zero, size, rot);
+				asset.Spawn(scale, pos * scale * default_scale, size, rot);
 			}
 		}
 	}
@@ -114,6 +116,9 @@ namespace ModTypes {
 		virtual public Vector3 GetSize() {
 			// Used for grid-spawning
 			return new Vector3(1, 1, 1);
+		}
+		virtual public List<string> GetResourceNames() {
+			return null;
 		}
 	}
 	
@@ -162,11 +167,19 @@ namespace ModTypes {
 		override public void Spawn(float game_scale, Vector3 pos, Vector3 size, Quaternion rot) {
 			Debug.Log("Spawn deck.");
 			// TODO: Refactor location of deck_prefab (should not be in ModManagerScript)
-			GameObject deck_object = (GameObject)Network.Instantiate(ModManagerScript.Instance().deck_prefab, pos, rot, 0);
+			ModManagerScript mod_manager = ModManagerScript.Instance();
+			GameObject deck_object = (GameObject)Network.Instantiate(mod_manager.deck_prefab, pos, rot, 0);
 			if (size != Vector3.one) {
 				deck_object.transform.localScale = size;  // TODO: Multiply, not override
 			}
-			deck_object.GetComponent<DeckScript>().Fill(card_ids);
+			// Generate CardData list
+			var cards = new List<CardData>();
+			var back_id = mod_manager.GetStringId(tex_back);
+			foreach(string tex in tex_cards) {
+				cards.Add(new CardData(mod_manager.GetStringId(tex), back_id));
+			}
+			// Fill deck
+			deck_object.GetComponent<DeckScript>().Fill(cards);
 		}
 		override public Quaternion GetRotation(string orientation) {
 			// TODO!
@@ -183,6 +196,12 @@ namespace ModTypes {
 		override public Vector3 GetSize() {
 			// TODO: Determine dynamically in grid spawn method
 			return new Vector3(1.5f, 0, 2f);
+		}
+		override public List<string> GetResourceNames() {
+			// TODO: Improve efficiency
+			var res = new List<string>(tex_cards);
+			res.Add(tex_back);
+			return res;
 		}
 	}
 }
@@ -407,11 +426,16 @@ public class ModManagerScript : MonoBehaviour {
 		return null;
 	}
 	
+	// String IDs are used for networking to speed up initial join
+	// The clients should all generate the same dictionaries and a hash will be used to verify
+	Dictionary<string, int> stringIds;
+	Dictionary<int, string> stringIds_reverse;
+	
 	string NormalizePath(string path) {
 		// Ugly fix since Unity does not support paths with backslash separator
 		if (Application.platform == RuntimePlatform.WindowsPlayer ||
 			Application.platform == RuntimePlatform.WindowsEditor ||
-			Application.platform == RuntimePlatform.WindowsWebPlayer)  // This shouldn't matter on web, but...
+			Application.platform == RuntimePlatform.WindowsWebPlayer)  // This shouldn't matter on web (no external content), but...
 			path = path.Replace("\\", "/");
 		return path;
 	}
@@ -424,43 +448,46 @@ public class ModManagerScript : MonoBehaviour {
 		return path.StartsWith(active_mod.base_directory);
 	}
 	
+	public int GetStringId(string s) {
+		if (stringIds.ContainsKey(s))
+			return stringIds[s];
+		return -1;
+	}
+	
 	public bool SelectMod(int mod_id) {
 		if (mods.Count <= mod_id || mod_id < 0)
 			return false;
 		
 		active_mod = mods[mod_id];
-		cardIdCache_ = new Dictionary<KeyValuePair<string, string>, int>();
-		cardFronts_ = new Dictionary<int, Material>();
-		cardBacks_ = new Dictionary<int, Material>();
-		nextCardId = 0;
 		textureCache_ = new Dictionary<string, Texture2D>();
 		materialCache_ = new Dictionary<string, Material>();
+		stringIds = new Dictionary<string, int>();
+		stringIds_reverse = new Dictionary<int, string>();
+		var currentStringId = 0;
 		
 		foreach (var asset in active_mod.assets.Values) {
-			if (asset.GetType() == typeof(ModTypes.Deck)) {
-				var deck = ((ModTypes.Deck)asset);
-				deck.card_ids = new List<int>();
-				foreach (var tex in deck.tex_cards) {
-					// TODO: Use cache
-					cardFronts_.Add(nextCardId, GetMaterial(tex));
-					cardBacks_.Add(nextCardId, GetMaterial(deck.tex_back));
-					
-					deck.card_ids.Add(nextCardId);
-					
-					++nextCardId;
-				}
+			// General
+			// Generate string ids
+			foreach (string path in asset.GetResourceNames()) {
+				if (stringIds.ContainsKey(path))
+					continue;
+				stringIds[path] = currentStringId;
+				stringIds_reverse[currentStringId] = path;
+				++currentStringId;
 			}
+			
+			// Type-specific code
+			/*
+			var type = asset.GetType();
+			if (type == typeof(ModTypes.Deck)) {
+				var deck = ((ModTypes.Deck)asset);
+			}
+			*/
 		}
 		
 		return true;
 	}
 	
-	// private Dictionary<
-	private Dictionary<KeyValuePair<string, string>, int> cardIdCache_;
-	private Dictionary<int, Material> cardFronts_;
-	private Dictionary<int, Material> cardBacks_;
-	// private Dictionary<int, string> cardIdCache_;
-	private int nextCardId = 0;
 	private Dictionary<string, Texture2D> textureCache_ = new Dictionary<string, Texture2D>();
 	public Texture2D lastTex;
 	
@@ -548,15 +575,9 @@ public class ModManagerScript : MonoBehaviour {
 		return null;
 	}
 	
-	public Material GetCardBackMaterial(int id){
-		if (cardBacks_.ContainsKey(id))
-			return cardBacks_[id];
-		return null;
-	}
-	
-	public Material GetCardFrontMaterial(int id){
-		if (cardFronts_.ContainsKey(id))
-			return cardFronts_[id];
+	public Material GetMaterial(int id){
+		if (stringIds_reverse.ContainsKey(id))
+			return GetMaterial(stringIds_reverse[id]);
 		return null;
 	}
 }

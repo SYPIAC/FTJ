@@ -3,6 +3,7 @@ using System.Collections;
 
 public class CardScript : MonoBehaviour {	
 	int card_id_ = -1;
+	int card_back_id_ = -1;
 	
 	public AudioClip[] impact_sound;
 	public AudioClip[] pick_up_sound;
@@ -10,19 +11,20 @@ public class CardScript : MonoBehaviour {
 	const float PHYSICS_SOUND_DELAY = 0.1f;
 
 	[RPC]
-	public void PrepareLocal(int card_id) {
+	public void PrepareLocal(int card_id, int card_back_id) {
 		var card_back = transform.FindChild("Back").transform.FindChild("default");
-		card_back.renderer.material = ModManagerScript.Instance().GetCardBackMaterial(card_id);
+		card_back.renderer.material = ModManagerScript.Instance().GetMaterial(card_back_id);
 		var card_front = transform.FindChild("FrontBorder").transform.FindChild("default");
-		card_front.renderer.material = ModManagerScript.Instance().GetCardFrontMaterial(card_id);
+		card_front.renderer.material = ModManagerScript.Instance().GetMaterial(card_id);
 		card_id_ = card_id;
+		card_back_id_ = card_back_id;
 	}
 	
-	public void Prepare(int card_id) {
+	public void Prepare(int card_id, int card_back_id) {
 		if(Network.isServer && networkView){
-			networkView.RPC("PrepareLocal",RPCMode.AllBuffered,card_id);
+			networkView.RPC("PrepareLocal", RPCMode.AllBuffered, card_id, card_back_id);
 		} else {
-			PrepareLocal(card_id);
+			PrepareLocal(card_id, card_back_id);
 		}
 	}
 	
@@ -37,8 +39,23 @@ public class CardScript : MonoBehaviour {
 	public int card_id(){
 		return card_id_;
 	}
-	public void SetCardID(int id){
+
+	public int card_back_id() {
+		return card_back_id_;
+	}
+	
+	public CardData card_data() {
+		return new CardData(card_id_, card_back_id_);
+	}
+
+	public void SetCardID(int id, int back_id){
 		card_id_ = id;
+		card_back_id_ = back_id;
+	}
+
+	public void ClearCard(){
+		card_id_ = -1;
+		card_back_id_ = -1;
 	}
 		
 	void PlayRandomSound(AudioClip[] clips, float volume){

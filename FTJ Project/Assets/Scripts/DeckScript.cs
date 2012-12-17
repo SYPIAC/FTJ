@@ -7,9 +7,11 @@ using MiniJSON;
 public class DeckScript : MonoBehaviour {
 	public GameObject card_prefab;
 	public GameObject card_facade_prefab;
-	List<int> cards_ = new List<int>();
+	List<CardData> cards_ = new List<CardData>();
 	int top_card_id_;
+	int top_card_back_id_;
 	int bottom_card_id_;
+	int bottom_card_back_id_;
 	int num_cards_;
 	GameObject top_card_ = null;
 	GameObject bottom_card_ = null;
@@ -37,15 +39,15 @@ public class DeckScript : MonoBehaviour {
 		PlayRandomSound(pick_up_sound, 0.1f);
 	}
 	
-	public List<int> GetCards(){
+	public List<CardData> GetCards(){
 		return cards_;
 	}
 	
 	public void RandomizeCards(){
-		List<int> new_card_list = new List<int>();
+		var new_card_list = new List<CardData>();
 		while(cards_.Count > 0){
-			int rand_card = Random.Range(0,cards_.Count);
-			new_card_list.Add (cards_[rand_card]);
+			int rand_card = Random.Range(0, cards_.Count);
+			new_card_list.Add(cards_[rand_card]);
 			cards_.RemoveAt(rand_card);
 		}
 		cards_ = new_card_list;
@@ -91,16 +93,8 @@ public class DeckScript : MonoBehaviour {
 		}
 	}
 	
-	public void Fill(List<int> cards) {
-		cards_ = new List<int>(cards);
-		num_cards_ = cards_.Count;
-		RandomizeCards();
-		RegenerateEndCardIDs();
-		RegenerateEndCards();
-	}
-	
-	public void Fill(string deck_name){
-		cards_ = new List<int>(CardManagerScript.Instance().GetDeckCards(deck_name));
+	public void Fill(List<CardData> cards) {
+		cards_ = new List<CardData>(cards);
 		num_cards_ = cards_.Count;
 		RandomizeCards();
 		RegenerateEndCardIDs();
@@ -108,13 +102,19 @@ public class DeckScript : MonoBehaviour {
 	}
 	
 	void RegenerateEndCardIDs() {
-		top_card_id_ = -1;
-		bottom_card_id_ = -1;
 		if(num_cards_ > 1){
-			top_card_id_ = cards_[0];
-		}		
+			top_card_id_ = cards_[0].card_id;
+			top_card_back_id_ = cards_[0].card_back_id;
+		} else {
+			top_card_id_ = -1;
+			top_card_back_id_ = -1;
+		}
 		if(num_cards_ > 0){
-			bottom_card_id_ = cards_[num_cards_-1];
+			bottom_card_id_ = cards_[num_cards_ - 1].card_id;
+			bottom_card_back_id_ = cards_[num_cards_ - 1].card_back_id;
+		} else {
+			bottom_card_id_ = -1;
+			bottom_card_back_id_ = -1;
 		}
 	}
 	
@@ -131,20 +131,20 @@ public class DeckScript : MonoBehaviour {
 			var pos = transform.FindChild("bottom_card").transform.position;
 			var rot = transform.FindChild("bottom_card").transform.rotation;
 			pos += transform.rotation * new Vector3(0,(num_cards_*0.013f+0.1f)*transform.localScale.y,0);
-			top_card_ = CreateCardFacade(top_card_id_,pos,rot);
+			top_card_ = CreateCardFacade(top_card_id_, top_card_back_id_, pos, rot);
 		}		
 		if(bottom_card_id_ != -1){
 			var pos = transform.FindChild("bottom_card").transform.position;
 			var rot = transform.FindChild("bottom_card").transform.rotation;
-			bottom_card_ = CreateCardFacade(bottom_card_id_,pos,rot);
+			bottom_card_ = CreateCardFacade(bottom_card_id_, bottom_card_back_id_, pos, rot);
 		}
 	}
 	
-	GameObject CreateCardFacade(int card_id, Vector3 pos, Quaternion rot){
+	GameObject CreateCardFacade(int card_id, int card_back_id, Vector3 pos, Quaternion rot){
 		var card = (GameObject)GameObject.Instantiate(card_facade_prefab, pos, rot);
 		card.transform.parent = transform;
 		var card_script = card.GetComponent<CardScript>();
-		card_script.Prepare(card_id);
+		card_script.Prepare(card_id, card_back_id);
 		card.transform.localScale = new Vector3(1,1,1);
 		return card;
 	}
@@ -163,21 +163,24 @@ public class DeckScript : MonoBehaviour {
 		}
 		GameObject card;
 		int card_id = -1;
+		int card_back_id = -1;
 		if(top && top_card_){
 			card = top_card_;
-			card_id = cards_[0];
+			card_id = cards_[0].card_id;
+			card_back_id = cards_[0].card_back_id;
 			cards_.RemoveAt(0);
 		} else {
 			card = bottom_card_;
-			card_id = cards_[num_cards_-1];
-			cards_.RemoveAt(num_cards_-1);
+			card_id = cards_[num_cards_ - 1].card_id;
+			card_back_id = cards_[num_cards_ - 1].card_back_id;
+			cards_.RemoveAt(num_cards_ - 1);
 		}
 		--num_cards_;
 		RegenerateEndCardIDs();
 		RegenerateEndCards();
 		
 		var new_card = (GameObject)Network.Instantiate(card_prefab, card.transform.position, card.transform.rotation, 0);
-		new_card.GetComponent<CardScript>().Prepare(card_id);
+		new_card.GetComponent<CardScript>().Prepare(card_id, card_back_id);
 		GameObject.Destroy(card);
 		if(num_cards_ == 1){
 			TakeCard(false);
@@ -185,11 +188,11 @@ public class DeckScript : MonoBehaviour {
 		return new_card;
 	}
 	
-	public void AddCard(bool top, int id){
+	public void AddCard(bool top, CardData card){
 		if(top){
-			cards_.Insert(0, id);
+			cards_.Insert(0, new CardData(card));
 		} else {
-			cards_.Add(id);
+			cards_.Add(new CardData(card));
 		}
 		++num_cards_;
 		RegenerateEndCardIDs();
@@ -221,17 +224,27 @@ public class DeckScript : MonoBehaviour {
 		if(stream.isWriting) {
 			int top_card_id = top_card_id_;
 			stream.Serialize(ref top_card_id);
+			int top_card_back_id = top_card_back_id_;
+			stream.Serialize(ref top_card_back_id);
 			int bottom_card_id = bottom_card_id_;
 			stream.Serialize(ref bottom_card_id);
+			int bottom_card_back_id = bottom_card_back_id_;
+			stream.Serialize(ref bottom_card_back_id);
 			int num_cards = num_cards_;
 			stream.Serialize(ref num_cards);
 		} else {
 			int top_card_id = -1;
 			stream.Serialize(ref top_card_id);
 			top_card_id_ = top_card_id;
+			int top_card_back_id = -1;
+			stream.Serialize(ref top_card_back_id);
+			top_card_back_id_ = top_card_back_id;
 			int bottom_card_id = -1;
 			stream.Serialize(ref bottom_card_id);
 			bottom_card_id_ = bottom_card_id;
+			int bottom_card_back_id = -1;
+			stream.Serialize(ref bottom_card_back_id);
+			bottom_card_back_id_ = bottom_card_back_id;
 			int num_cards = -1;
 			stream.Serialize(ref num_cards);
 			num_cards_ = num_cards;

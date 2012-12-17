@@ -173,13 +173,13 @@ public class ObjectManagerScript : MonoBehaviour {
 								grabbable.transform.position = card.transform.position;
 								grabbable.transform.rotation = Quaternion.AngleAxis(180,new Vector3(0,0,1))*card.transform.rotation;  // TODO: Flip
 								// Put held card on highest side of new deck
-								grabbable.GetComponent<DeckScript>().AddCard((grabbable.transform.up.y > 0.0f), card.GetComponent<CardScript>().card_id());
+								grabbable.GetComponent<DeckScript>().AddCard((grabbable.transform.up.y > 0.0f), card.GetComponent<CardScript>().card_data());
 								
 								// Update held decks/cards
 								heldDecks.Add(grabbable);
 								heldCards.Remove(card);
 								
-								card.GetComponent<CardScript>().SetCardID(-1);
+								card.GetComponent<CardScript>().ClearCard();
 								networkView.RPC("DestroyObject",RPCMode.AllBuffered,card.networkView.viewID);
 								break;
 							}
@@ -226,8 +226,8 @@ public class ObjectManagerScript : MonoBehaviour {
 								bool top = Vector3.Dot(card.transform.position - grabbable.transform.position, card.transform.up) >= 0.0;
 								var deck = (GameObject)Network.Instantiate(deck_prefab, (card.transform.position + grabbable.transform.position)*0.5f, card.transform.rotation,0); 
 								deck.transform.rotation = Quaternion.AngleAxis(180,deck.transform.right)*deck.transform.rotation;
-								deck.GetComponent<DeckScript>().AddCard(!top, grabbable.GetComponent<CardScript>().card_id());
-								deck.GetComponent<DeckScript>().AddCard(!top, card.GetComponent<CardScript>().card_id());
+								deck.GetComponent<DeckScript>().AddCard(!top, grabbable.GetComponent<CardScript>().card_data());
+								deck.GetComponent<DeckScript>().AddCard(!top, card.GetComponent<CardScript>().card_data());
 								
 								// Mimick grab
 								deck.GetComponent<GrabbableScript>().held_by_player_ = player_id;
@@ -240,9 +240,9 @@ public class ObjectManagerScript : MonoBehaviour {
 								heldCards.Remove(card);
 								
 								// TODO: Investigate reason for cardid change
-								card.GetComponent<CardScript>().SetCardID(-1);
+								card.GetComponent<CardScript>().ClearCard();
 								networkView.RPC("DestroyObject",RPCMode.AllBuffered,card.networkView.viewID);
-								grabbable.GetComponent<CardScript>().SetCardID(-1);
+								grabbable.GetComponent<CardScript>().ClearCard();
 								networkView.RPC("DestroyObject",RPCMode.AllBuffered,grabbable.networkView.viewID);
 								merged = true;
 								break;
@@ -256,8 +256,8 @@ public class ObjectManagerScript : MonoBehaviour {
 									// Debug.Log("Grab card have deck.");
 									
 									// Put new card on lowest side of held deck
-									deck.GetComponent<DeckScript>().AddCard((deck.transform.up.y < 0.0f), grabbable.GetComponent<CardScript>().card_id());
-									grabbable.GetComponent<CardScript>().SetCardID(-1);
+									deck.GetComponent<DeckScript>().AddCard((deck.transform.up.y < 0.0f), grabbable.GetComponent<CardScript>().card_data());
+									grabbable.GetComponent<CardScript>().ClearCard();
 									networkView.RPC("DestroyObject",RPCMode.AllBuffered,grabbable.networkView.viewID);
 									break;
 								}
@@ -529,8 +529,8 @@ public class ObjectManagerScript : MonoBehaviour {
 		}
 		if(card.GetComponent<GrabbableScript>().held_by_player_ == -1 && facing_same_way && close_enough){
 			bool top = Vector3.Dot(card.transform.position - deck.transform.position, deck.transform.up) >= 0.0;
-			deck.GetComponent<DeckScript>().AddCard(top, card.GetComponent<CardScript>().card_id());
-			card.GetComponent<CardScript>().SetCardID(-1);
+			deck.GetComponent<DeckScript>().AddCard(top, card.GetComponent<CardScript>().card_data());
+			card.GetComponent<CardScript>().ClearCard();
 			networkView.RPC("DestroyObject",RPCMode.AllBuffered,card.networkView.viewID);
 		}
 	}
@@ -590,11 +590,11 @@ public class ObjectManagerScript : MonoBehaviour {
 			bool top = Vector3.Dot(card_a.transform.position - card_b.transform.position, card_a.transform.up) >= 0.0;
 			var deck = (GameObject)Network.Instantiate(deck_prefab, (card_a.transform.position + card_b.transform.position)*0.5f, card_a.transform.rotation,0); 
 			deck.transform.rotation = Quaternion.AngleAxis(180,deck.transform.right)*deck.transform.rotation;
-			deck.GetComponent<DeckScript>().AddCard(top, card_a.GetComponent<CardScript>().card_id());
-			deck.GetComponent<DeckScript>().AddCard(top, card_b.GetComponent<CardScript>().card_id());
-			card_a.GetComponent<CardScript>().SetCardID(-1);
+			deck.GetComponent<DeckScript>().AddCard(top, card_a.GetComponent<CardScript>().card_data());
+			deck.GetComponent<DeckScript>().AddCard(top, card_b.GetComponent<CardScript>().card_data());
+			card_a.GetComponent<CardScript>().ClearCard();
 			networkView.RPC("DestroyObject",RPCMode.AllBuffered,card_a.networkView.viewID);
-			card_b.GetComponent<CardScript>().SetCardID(-1);
+			card_b.GetComponent<CardScript>().ClearCard();
 			networkView.RPC("DestroyObject",RPCMode.AllBuffered,card_b.networkView.viewID);
 		}
 	}

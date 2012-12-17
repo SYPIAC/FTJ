@@ -1,16 +1,15 @@
-using UnityEngine;
-using System.Collections;
-
-public class CardData {
-	public string title = "";
-	public string type = "";
-	public string rules = "";
-	public string flavour = "";
-	public int image = 0;
-	public int back = 0;
-	public int target = 0;
-	public int price = 0;
-	public int gold = 0;
-	public int points = 0;
-	public Material material = null;
+public class CardData
+{
+	public int card_id = -1;
+	public int card_back_id = -1;
+	
+	public CardData() { }
+	public CardData(CardData other) {
+		card_id = other.card_id;
+		card_back_id = other.card_back_id;
+	}
+	public CardData(int card_id_, int card_back_id_) {
+		card_id = card_id_;
+		card_back_id = card_back_id_;
+	}
 }
