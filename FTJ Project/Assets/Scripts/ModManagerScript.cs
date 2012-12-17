@@ -118,6 +118,7 @@ namespace ModTypes {
 	}
 	
 	// Spawnable types
+	/*
 	class Dice : BaseObject {
 		override public void Spawn(float game_scale, Vector3 pos, Vector3 size, Quaternion rot) {
 			Debug.Log("Spawn dice.");
@@ -127,6 +128,7 @@ namespace ModTypes {
 			}
 		}
 	}
+	*/
 	
 	/* class Board : BaseObject {
 		public string texture, texture_n;
@@ -135,6 +137,20 @@ namespace ModTypes {
 			
 		}
 	} */
+	
+	class Prefab : BaseObject {
+		public GameObject prefab;
+		override public void Spawn(float game_scale, Vector3 pos, Vector3 size, Quaternion rot) {
+			Debug.Log("Spawn prefab.");
+			var dice_object = (GameObject)Network.Instantiate(prefab, pos, rot, 0);
+			if (size != Vector3.one) {
+				dice_object.transform.localScale = size;  // TODO: Multiply, not override
+			}
+		}
+	}
+	
+	class BuiltinToken : BaseObject {
+	}
 	
 	class Deck : BaseObject {
 		public string tex_back;
@@ -177,10 +193,15 @@ public class ModManagerScript : MonoBehaviour {
 	// tokens
 	public GameObject board_prefab;
 	public GameObject dice_prefab;
-	public GameObject token_prefab;
 	public GameObject deck_prefab;
 	public GameObject silver_coin_prefab;
 	public GameObject gold_coin_prefab;
+	
+	public GameObject token_cleric;
+	public GameObject token_knight;
+	public GameObject token_ranger;
+	public GameObject token_thief;
+	public GameObject token_wizard;
 	
 	public Material default_card_front;
 	public Material default_card_back;
@@ -354,13 +375,27 @@ public class ModManagerScript : MonoBehaviour {
 		}
 	}
 	
-	Dictionary<string, ModTypes.BaseObject> defaultAssets = new Dictionary<string, ModTypes.BaseObject>();
+	Dictionary<string, ModTypes.BaseObject> defaultAssets;
 	
 	void InitializeDefaultAssets() {
-		// TODO: d6, tokens
+		// TODO: Add more default assets
 		// TODO: Refactor
+		if (defaultAssets != null)
+			return;
 		
-		defaultAssets["d6"] = new ModTypes.Dice();
+		defaultAssets = new Dictionary<string, ModTypes.BaseObject>() {
+			{ "d6", new ModTypes.Prefab{prefab=dice_prefab} },  // ModTypes.Dice() },
+			{ "token_cleric", new ModTypes.Prefab{prefab=token_cleric} },
+			{ "token_knight", new ModTypes.Prefab{prefab=token_knight} },
+			{ "token_ranger", new ModTypes.Prefab{prefab=token_ranger} },
+			{ "token_thief", new ModTypes.Prefab{prefab=token_thief} },
+			{ "token_wizard", new ModTypes.Prefab{prefab=token_wizard} },
+			// at least d4, d8, d12, d20
+			// five types of player tokens
+			// gold and silver coins
+			// health tokens
+			// standard 52-card deck
+		};
 	}
 	
 	ModTypes.BaseObject GetAsset(Dictionary<string, ModTypes.BaseObject> user_defined_assets, string asset_name) {

@@ -16,6 +16,11 @@ public class ParentTokenScript : MonoBehaviour {
 		}
 	}	
 	
+	[RPC]
+	public void AssignMesh (string path) {
+		// TODO!
+	}
+	
 	[RPC]	
 	public void AssignMesh (int which) {
 		mesh_object = (GameObject)GameObject.Instantiate(mesh_prefabs[which], transform.position, transform.rotation);
