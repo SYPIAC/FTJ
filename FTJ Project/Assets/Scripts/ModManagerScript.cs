@@ -172,6 +172,9 @@ namespace ModTypes {
 			}
 			dice_object.GetComponent<DiceScript>().SetModel(mod_manager.GetStringId(model),
 				mod_manager.GetStringId(tex), mod_manager.GetStringId(tex_n));
+			if (true || physics_type == "model") {
+				dice_object.GetComponent<DiceScript>().SetPhysicsModel(mod_manager.GetStringId(physics_model));
+			}
 		}
 		override public Vector3 GetSize() {
 			// TODO: Determine dynamically in grid spawn method
@@ -497,9 +500,11 @@ public class ModManagerScript : MonoBehaviour {
 	}
 	
 	public int GetStringId(string s) {
-		if (stringIds.ContainsKey(s))
-			return stringIds[s];
-		return -1;
+		if (s == null)
+			return -1;
+		if (!stringIds.ContainsKey(s))
+			return -1;
+		return stringIds[s];
 	}
 	
 	public bool SelectMod(int mod_id) {

@@ -21,7 +21,7 @@ public class DiceScript : MonoBehaviour {
 		model
 	};
 	PhysicsTypes physics_type_ = PhysicsTypes.model;
-	int physics_mesh_id_ = -1;
+	public int physics_mesh_id_ = -1;
 	
 	void PlayRandomSound(AudioClip[] clips, float volume){
 		audio.PlayOneShot(clips[Random.Range(0,clips.Length)], volume);
@@ -77,7 +77,7 @@ public class DiceScript : MonoBehaviour {
 	}
 	
 	public void SetPhysicsModel(int physics_mesh_id) {
-		physics_mesh_id = physics_mesh_id;
+		physics_mesh_id_ = physics_mesh_id;
 		ReloadPhysics();
 	}
 	
@@ -106,7 +106,22 @@ public class DiceScript : MonoBehaviour {
 	void ReloadPhysics() {
 		ModManagerScript mod_manager = ModManagerScript.Instance();
 		
-		// TODO: Physics model
+		if (true) { // physics_type_ == PhysicsTypes.model) {  // TODO: check physics type
+			var mesh = mod_manager.GetMesh(physics_mesh_id_);
+			if (mesh != null) {
+				MeshCollider mc = gameObject.GetComponent<MeshCollider>();
+				if (mc == null) {
+					// Destroy any existing collider
+					if (collider != null)
+						Destroy(collider);
+					mc = gameObject.AddComponent<MeshCollider>();
+				}
+				mc.sharedMesh = mesh;
+				mc.convex = true;
+			}
+		} else if (physics_type_ == PhysicsTypes.box) {
+			// TODO: Physics box
+		}
 	}
 	
 	void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
