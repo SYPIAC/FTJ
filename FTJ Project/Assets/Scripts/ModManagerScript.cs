@@ -119,6 +119,7 @@ namespace ModTypes {
 			Debug.LogWarning("Call to default BaseObject.GetResourceNames");
 			return new List<string>();
 		}
+		virtual public void InitStringIds(ModManagerScript mod_manager) { }
 	}
 	
 	// Spawnable types
@@ -159,7 +160,8 @@ namespace ModTypes {
 	class Dice : BaseObject {
 		public string model;
 		public float model_scale;
-		public string tex, tex_n;
+		public MaterialMaker material_maker;
+		// public string tex, tex_n;
 		public string physics_type, physics_model;  // Only physics_type "model" is supported right now
 		
 		override public void Spawn(float game_scale, Vector3 pos, Vector3 size, Quaternion rot) {
@@ -170,8 +172,8 @@ namespace ModTypes {
 			if (size != Vector3.one) {
 				dice_object.transform.localScale = size;  // TODO: Multiply, not override
 			}
-			dice_object.GetComponent<DiceScript>().SetModel(mod_manager.GetStringId(model),
-				mod_manager.GetStringId(tex), mod_manager.GetStringId(tex_n));
+			dice_object.GetComponent<DiceScript>().SetModel(mod_manager.GetStringId(model));
+			dice_object.GetComponent<DiceScript>().SetMaterial(material_maker);
 			if (true || physics_type == "model") {
 				dice_object.GetComponent<DiceScript>().SetPhysicsModel(mod_manager.GetStringId(physics_model));
 			}
@@ -181,13 +183,13 @@ namespace ModTypes {
 			return new Vector3(0.4f, 0.4f, 0.4f);
 		}
 		override public List<string> GetResourceNames() {
-			// TODO: Improve efficiency
-			var res = new List<string>();
+			var res = material_maker.GetResourceNames();
 			res.Add(model);
-			res.Add(tex);
-			res.Add(tex_n);
 			res.Add(physics_model);
 			return res;
+		}
+		override public void InitStringIds(ModManagerScript mod_manager) {
+			material_maker.InitStringIds(mod_manager);
 		}
 	}
 	
@@ -437,8 +439,12 @@ public class ModManagerScript : MonoBehaviour {
 		
 		defaultAssets = new Dictionary<string, ModTypes.BaseObject>() {
 			// TODO: Remove physics model for d6, use box collider
-			{ "d6", new ModTypes.Dice{model="asset://models/d6", model_scale=0.005f, tex="asset://textures/d6_c", tex_n="asset://textures/d6_n", physics_type="box", physics_model="asset://models/d6"} },
-			{ "d8", new ModTypes.Dice{model="asset://models/d8", model_scale=0.005f, tex="asset://textures/d8_c", physics_type="model", physics_model="asset://models/d8"} },
+			{ "d6", new ModTypes.Dice{model="asset://models/d6", model_scale=0.005f,
+					material_maker=new MaterialMaker{diffuse_s="asset://textures/d6_c", normal_s="asset://textures/d6_n"},
+					physics_type="box", physics_model="asset://models/d6"} },
+			{ "d8", new ModTypes.Dice{model="asset://models/d8", model_scale=0.005f,
+					material_maker=new MaterialMaker{diffuse_s="asset://textures/d8_c"},
+					physics_type="model", physics_model="asset://models/d8"} },
 			{ "token_cleric", new ModTypes.Prefab{prefab=token_cleric} },
 			{ "token_knight", new ModTypes.Prefab{prefab=token_knight} },
 			{ "token_ranger", new ModTypes.Prefab{prefab=token_ranger} },
@@ -518,6 +524,8 @@ public class ModManagerScript : MonoBehaviour {
 		stringIds_reverse = new Dictionary<int, string>();
 		var currentStringId = 0;
 		
+		// TODO: Refactor
+		
 		// Generate string ids for default assets
 		foreach (string key in defaultAssetKeys) {
 			var asset = defaultAssets[key];
@@ -530,6 +538,9 @@ public class ModManagerScript : MonoBehaviour {
 				stringIds_reverse[currentStringId] = path;
 				++currentStringId;
 			}
+			
+			// Use string ids
+			asset.InitStringIds(this);
 		}
 		
 		// Generate string ids for mod assets
@@ -543,6 +554,9 @@ public class ModManagerScript : MonoBehaviour {
 				stringIds_reverse[currentStringId] = path;
 				++currentStringId;
 			}
+			
+			// Use string ids
+			asset.InitStringIds(this);
 		}
 		
 		return true;

@@ -14,8 +14,7 @@ public class DiceScript : MonoBehaviour {
 	const float DICE_DICE_SOUND_MULT = 1.0f;
 	
 	int mesh_id_ = -1;
-	int tex_id_ = -1;
-	int tex_n_id_ = -1;
+	MaterialMaker material_maker_ = null;
 	enum PhysicsTypes {
 		box,
 		model
@@ -69,11 +68,14 @@ public class DiceScript : MonoBehaviour {
 		}	
 	}
 	
-	public void SetModel(int mesh_id, int tex_id, int tex_n_id) {
+	public void SetModel(int mesh_id) {
 		mesh_id_ = mesh_id;
-		tex_id_ = tex_id;
-		tex_n_id_ = tex_n_id;
 		ReloadModel();
+	}
+	
+	public void SetMaterial(MaterialMaker material_maker) {
+		material_maker_ = material_maker;
+		ReloadMaterial();
 	}
 	
 	public void SetPhysicsModel(int physics_mesh_id) {
@@ -90,17 +92,13 @@ public class DiceScript : MonoBehaviour {
 	void ReloadModel() {
 		ModManagerScript mod_manager = ModManagerScript.Instance();
 		transform.FindChild("default").GetComponent<MeshFilter>().mesh = mod_manager.GetMesh(mesh_id_);
+	}
+	
+	void ReloadMaterial() {
+		ModManagerScript mod_manager = ModManagerScript.Instance();
 		
-		// TODO: Improve material loading. User should be able to specify the shader type
-		var mat = new Material(mod_manager.GetMaterial(tex_id_));
-		mat.shader = Shader.Find("Bumped Specular");
-		
-		var tex_n = mod_manager.GetTexture(tex_n_id_);
-		if (tex_n != null)
-			mat.SetTexture("_BumpMap", tex_n);
-		
+		var mat = material_maker_.Make(mod_manager);
 		transform.FindChild("default").GetComponent<MeshRenderer>().material = mat;
-		// TODO: Texture Normal
 	}
 	
 	void ReloadPhysics() {
@@ -125,34 +123,21 @@ public class DiceScript : MonoBehaviour {
 	}
 	
 	void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
-		if(stream.isWriting) {
-			int mesh_id = mesh_id_;
-			stream.Serialize(ref mesh_id);
-			int tex_id = tex_id_;
-			stream.Serialize(ref tex_id);
-			int tex_n_id = tex_n_id_;
-			stream.Serialize(ref tex_n_id);
-			int physics_type = (int) physics_type_;
-			stream.Serialize(ref physics_type);
-			int physics_mesh_id = physics_mesh_id_;
-			stream.Serialize(ref physics_mesh_id);
-		} else {
-			int mesh_id = -1;
-			stream.Serialize(ref mesh_id);
-			mesh_id_ = mesh_id;
-			int tex_id = -1;
-			stream.Serialize(ref tex_id);
-			tex_id_ = tex_id;
-			int tex_n_id = -1;
-			stream.Serialize(ref tex_n_id);
-			tex_n_id_ = tex_n_id;
-			int physics_type = -1;
-			stream.Serialize(ref physics_type);
-			physics_type_ = (PhysicsTypes) physics_type;
-			int physics_mesh_id = -1;
-			stream.Serialize(ref physics_mesh_id);
-			physics_mesh_id_ = physics_mesh_id;
+		stream.Serialize(ref mesh_id_);
+
+		if (material_maker_ == null)
+			material_maker_ = new MaterialMaker();
+		material_maker_.Serialize(stream);
+
+		int physics_type = (int) physics_type_;
+		stream.Serialize(ref physics_type);
+		physics_type_ = (PhysicsTypes) physics_type;
+
+		stream.Serialize(ref physics_mesh_id_);
+
+		if (!stream.isWriting) {
 			ReloadModel();
+			ReloadMaterial();
 			ReloadPhysics();
 		}
 	}
