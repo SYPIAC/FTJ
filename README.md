@@ -1,10 +1,16 @@
 #Desperate Gods (Unnamed Mod)
 
+## Introduction
+
+The primary goal of this mod is to make modding easy, to create a board game engine. Modding will be easy through simple text and graphics files. Default resources will be available, including various standard dice, playing cards, and boards.
+
 ## Implemented
 
 - Now using Unity 4
+- Loads some game data from mod directory
+    - Many parts of this feature are still WIP, but decks and dice work
 - Ability to pick up multiple items / entire decks (using right click)
-- Some balance changes (to be summarized based on commits later)
+    - Needs fixes - see bugs below
 
 ## Goals
 
@@ -44,6 +50,8 @@ In no particular order:
         - NO - Tokens
     - YES - Load textures from file
         - NO - Optimize 
+    - NO - Load models from file
+    - NO - Load sounds from file
     - NO - Enforce identical mods for networking
     - NO - Filter by mod in server list
     - NO - Add interface to choose desired mod (or perhaps just a more involved server setup step)
@@ -52,9 +60,6 @@ In no particular order:
 
 ## Bugs
 
-- Dynamic textures become glitched when focus is lost / window is moved
-    - This makes all cards and tiles unreadable
-    - This will likely be "fixed" by rendering all the card and tile textures and importing the fully-rendered images with the new mod loading system
 - Drawing card from two-card face-up deck causes remaining card to go flying
 - Camera can be panned off the board
 - Dice often end up at top of screen but not flat, so they cannot be read
