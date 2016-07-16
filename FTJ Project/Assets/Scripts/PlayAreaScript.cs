@@ -12,9 +12,9 @@ public class PlayAreaScript : MonoBehaviour {
 						  Mathf.Lerp(color.g, avg_color, desaturation)*darken,
 						  Mathf.Lerp(color.b, avg_color, desaturation)*darken,
 						  0.9f);
-		transform.FindChild("Tint").FindChild("objobjBox02").renderer.material.color = color;
+		transform.FindChild("Tint").FindChild("objobjBox02").GetComponent<Renderer>().material.color = color;
 		if(Network.isServer){
-			networkView.RPC("SetColor",RPCMode.OthersBuffered, id);
+			GetComponent<NetworkView>().RPC("SetColor",RPCMode.OthersBuffered, id);
 		}
 	}
 }

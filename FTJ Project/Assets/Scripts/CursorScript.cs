@@ -35,30 +35,30 @@ public class CursorScript : MonoBehaviour {
 		Transform pointer = transform.FindChild("Pointer");
 		Transform pointer_tint = pointer.FindChild("pointer_tint");
 		Transform default_obj = pointer_tint.FindChild("default");
-		default_obj.renderer.material.color = color;	
+		default_obj.GetComponent<Renderer>().material.color = color;	
 	}
 	
 	void Start () {
-		if(networkView.isMine){
+		if(GetComponent<NetworkView>().isMine){
 			id_ = Net.GetMyID();
 		}
 		if(ObjectManagerScript.Instance()){
 			ObjectManagerScript.Instance().RegisterCursorObject(gameObject);
 		}
-		Screen.showCursor = false;
+		Cursor.visible = false;
 	}
 	
 	void OnDestroy() {
 		if(ObjectManagerScript.Instance()){
 			ObjectManagerScript.Instance().UnRegisterCursorObject(gameObject);
 		}
-		Screen.showCursor = true;
+		Cursor.visible = true;
 	}
 		
 	[RPC]
 	public void SetCardFaceUp(bool card_face_up){
-		if(Network.isServer && !networkView.isMine){
-			networkView.RPC ("SetCardFaceUp",RPCMode.Others, card_face_up);
+		if(Network.isServer && !GetComponent<NetworkView>().isMine){
+			GetComponent<NetworkView>().RPC ("SetCardFaceUp",RPCMode.Others, card_face_up);
 		} else {
 			card_face_up_ = card_face_up;
 		}
@@ -66,8 +66,8 @@ public class CursorScript : MonoBehaviour {
 	
 	[RPC]
 	public void SetCardRotated(int card_rotated){
-		if(Network.isServer && !networkView.isMine){
-			networkView.RPC ("SetCardRotated",RPCMode.Others, card_rotated);
+		if(Network.isServer && !GetComponent<NetworkView>().isMine){
+			GetComponent<NetworkView>().RPC ("SetCardRotated",RPCMode.Others, card_rotated);
 		} else {
 			card_rotated_ = card_rotated;
 		}
@@ -107,7 +107,7 @@ public class CursorScript : MonoBehaviour {
 	
 	void Grab(int grab_id, int player_id){
 		if(!Network.isServer){
-			networkView.RPC("TellObjectManagerAboutGrab",RPCMode.Server,grab_id,player_id);
+			GetComponent<NetworkView>().RPC("TellObjectManagerAboutGrab",RPCMode.Server,grab_id,player_id);
 		} else {
 			TellObjectManagerAboutGrab(grab_id, player_id);
 		}
@@ -115,7 +115,7 @@ public class CursorScript : MonoBehaviour {
 	
 	void GrabQueue(int grab_id, int player_id){
 		if(!Network.isServer){
-			networkView.RPC("TellObjectManagerAboutGrabQueue",RPCMode.Server,grab_id,player_id);
+			GetComponent<NetworkView>().RPC("TellObjectManagerAboutGrabQueue",RPCMode.Server,grab_id,player_id);
 		} else {
 			TellObjectManagerAboutGrabQueue(grab_id, player_id);
 		}
@@ -126,7 +126,7 @@ public class CursorScript : MonoBehaviour {
 		if(player_list.ContainsKey(id_)){
 			SetColor(player_list[id_].color_);
 		}
-		if(networkView.isMine){
+		if(GetComponent<NetworkView>().isMine){
 			if(Input.GetKeyDown("f")){
 				card_face_up_ = !card_face_up_;
 			}
@@ -141,7 +141,7 @@ public class CursorScript : MonoBehaviour {
 				card_rotated_ = 0;
 			}
 			tapping_ = Input.GetKey ("t");
-			var main_camera = GameObject.Find("Main Camera").camera;
+			var main_camera = GameObject.Find("Main Camera").GetComponent<Camera>();
 			Vector3 pos = new Vector3();
 			{
 				Ray ray = main_camera.ScreenPointToRay(Input.mousePosition);
@@ -198,7 +198,7 @@ public class CursorScript : MonoBehaviour {
 				}
 				if(hit_deck_id != deck_held_id_ && deck_held_time_ > 0.0f){
 					if(!Network.isServer){
-						networkView.RPC("TellObjectManagerAboutCardPeel",RPCMode.Server,deck_held_id_,id_);
+						GetComponent<NetworkView>().RPC("TellObjectManagerAboutCardPeel",RPCMode.Server,deck_held_id_,id_);
 					} else {
 						TellObjectManagerAboutCardPeel(deck_held_id_,id_);
 					}
@@ -237,7 +237,7 @@ public class CursorScript : MonoBehaviour {
 			}
 			if(Input.GetMouseButtonUp(0)){
 				if(!Network.isServer){
-					networkView.RPC("TellObjectManagerAboutMouseRelease",RPCMode.Server,id_);
+					GetComponent<NetworkView>().RPC("TellObjectManagerAboutMouseRelease",RPCMode.Server,id_);
 				} else {
 					TellObjectManagerAboutMouseRelease(id_);
 				}
@@ -246,7 +246,7 @@ public class CursorScript : MonoBehaviour {
 			if(Input.GetMouseButtonUp(1)){
 				queue_held_time = 0.0f;
 			}
-			rigidbody.position = pos;
+			GetComponent<Rigidbody>().position = pos;
 			transform.position = pos;
 		}
 	}

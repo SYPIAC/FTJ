@@ -21,7 +21,7 @@ public class ParentTokenScript : MonoBehaviour {
 		mesh_object = (GameObject)GameObject.Instantiate(mesh_prefabs[which], transform.position, transform.rotation);
 		mesh_object.transform.parent = transform;
 		if(Network.isServer){
-			networkView.RPC("AssignMesh",RPCMode.OthersBuffered,which);
+			GetComponent<NetworkView>().RPC("AssignMesh",RPCMode.OthersBuffered,which);
 		}
 	}
 	
@@ -30,7 +30,7 @@ public class ParentTokenScript : MonoBehaviour {
 		//mesh_object.renderer.material = new Material(mesh_object.renderer.material);
 		//mesh_object.renderer.material.color = ColorPalette.GetColor(which);
 		if(Network.isServer){
-			networkView.RPC("AssignColor",RPCMode.OthersBuffered,which);
+			GetComponent<NetworkView>().RPC("AssignColor",RPCMode.OthersBuffered,which);
 		}
 	}
 	
@@ -48,19 +48,19 @@ public class ParentTokenScript : MonoBehaviour {
 	[RPC]
 	public void PickUpSound() {
 		if(Network.isServer){
-			networkView.RPC("PickUpSound",RPCMode.Others);
+			GetComponent<NetworkView>().RPC("PickUpSound",RPCMode.Others);
 		}
 		PlayRandomSound(pick_up_sound, 0.1f);
 	}
 	
 	void PlayRandomSound(AudioClip[] clips, float volume){
-		audio.PlayOneShot(clips[Random.Range(0,clips.Length)], volume);
+		GetComponent<AudioSource>().PlayOneShot(clips[Random.Range(0,clips.Length)], volume);
 	}		
 	
 	[RPC]
 	void ImpactSound(float volume){
 		if(Network.isServer){
-			networkView.RPC("ImpactSound",RPCMode.Others,volume);
+			GetComponent<NetworkView>().RPC("ImpactSound",RPCMode.Others,volume);
 		}
 		PlayRandomSound(token_impact, volume*0.3f);		
 	}

@@ -10,19 +10,19 @@ public class CoinScript : MonoBehaviour {
 	[RPC]
 	public void PickUpSound() {
 		if(Network.isServer){
-			networkView.RPC("PickUpSound",RPCMode.Others);
+			GetComponent<NetworkView>().RPC("PickUpSound",RPCMode.Others);
 		}
 		PlayRandomSound(pick_up_sound, 0.1f);
 	}
 	
 	void PlayRandomSound(AudioClip[] clips, float volume){
-		audio.PlayOneShot(clips[Random.Range(0,clips.Length)], volume);
+		GetComponent<AudioSource>().PlayOneShot(clips[Random.Range(0,clips.Length)], volume);
 	}		
 	
 	[RPC]
 	void ImpactSound(float volume){
 		if(Network.isServer){
-			networkView.RPC("ImpactSound",RPCMode.Others,volume);
+			GetComponent<NetworkView>().RPC("ImpactSound",RPCMode.Others,volume);
 		}
 		PlayRandomSound(impact_sound, volume*0.3f);		
 	}

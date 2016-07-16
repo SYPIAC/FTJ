@@ -39,10 +39,10 @@ public class CardBakeScript : MonoBehaviour {
 		flavour_text.text = card_data_.flavour;
 		
 		var card_contents = transform.FindChild("Contents").transform.FindChild("default");
-		card_contents.renderer.material = new Material(card_contents.renderer.material);
-		card_contents.renderer.material.mainTexture = content_textures[card_data_.image];
+		card_contents.GetComponent<Renderer>().material = new Material(card_contents.GetComponent<Renderer>().material);
+		card_contents.GetComponent<Renderer>().material.mainTexture = content_textures[card_data_.image];
 	
-		var dice_renderer = transform.FindChild("Dice icon").FindChild("default").renderer;
+		var dice_renderer = transform.FindChild("Dice icon").FindChild("default").GetComponent<Renderer>();
 		if(card_data_.target > 0){
 			dice_renderer.enabled = true;
 			dice_renderer.material.mainTexture = dice_textures[card_data_.target-1];

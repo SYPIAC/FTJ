@@ -92,7 +92,7 @@ public class NetUIScript : MonoBehaviour {
 	
 	void SetTargetSong(int which) {
 		if(Network.connections.Length > 0){
-			networkView.RPC("TargetSongWasSet", RPCMode.All, Net.GetMyID(),which);
+			GetComponent<NetworkView>().RPC("TargetSongWasSet", RPCMode.All, Net.GetMyID(),which);
 		} else {
 			TargetSongWasSet(Net.GetMyID(),which);
 		}
@@ -263,7 +263,7 @@ public class NetUIScript : MonoBehaviour {
 					break;
 				case NetEvent.Type.PLAYER_CONNECTED:
 					ConsoleScript.Log("Player "+net_event.network_player()+" connected");
-					networkView.RPC("SyncSongWithServer",RPCMode.Others,int.Parse(net_event.network_player().ToString()), current_song_, target_song_, music_.volume, music_.time);
+					GetComponent<NetworkView>().RPC("SyncSongWithServer",RPCMode.Others,int.Parse(net_event.network_player().ToString()), current_song_, target_song_, music_.volume, music_.time);
 					break;
 				case NetEvent.Type.PLAYER_DISCONNECTED:
 					NetEventPlayerDisconnected(net_event);
@@ -338,18 +338,18 @@ public class NetUIScript : MonoBehaviour {
 		int player_id = int.Parse(Network.player.ToString());
 		ConsoleScript.Log("Telling server that player "+player_id+" is named: "+player_name_);
 		if(Network.isClient){
-			networkView.RPC("SetPlayerName", RPCMode.Server, player_id, name);
+			GetComponent<NetworkView>().RPC("SetPlayerName", RPCMode.Server, player_id, name);
 		} else {
 			PlayerListScript.Instance().SetPlayerName(player_id, name);	
 		}
 	}
 	
 	void SendChatMessage(string msg){
-		networkView.RPC ("ReceiveChatMessage",RPCMode.All,Net.GetMyID(), msg);	
+		GetComponent<NetworkView>().RPC ("ReceiveChatMessage",RPCMode.All,Net.GetMyID(), msg);	
 	}
 	
 	void PlayRandomSound(AudioClip[] clips, float volume){
-		audio.PlayOneShot(clips[Random.Range(0,clips.Length)], volume);
+		GetComponent<AudioSource>().PlayOneShot(clips[Random.Range(0,clips.Length)], volume);
 	}		
 	
 	[RPC]

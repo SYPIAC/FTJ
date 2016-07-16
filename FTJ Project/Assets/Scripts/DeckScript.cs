@@ -26,13 +26,13 @@ public class DeckScript : MonoBehaviour {
 	const float SHUFFLE_DELAY = 0.6f;
 	
 	void PlayRandomSound(AudioClip[] clips, float volume){
-		audio.PlayOneShot(clips[Random.Range(0,clips.Length)], volume);
+		GetComponent<AudioSource>().PlayOneShot(clips[Random.Range(0,clips.Length)], volume);
 	}	
 	
 	[RPC]
 	public void PickUpSound() {
 		if(Network.isServer){
-			networkView.RPC("PickUpSound",RPCMode.Others);
+			GetComponent<NetworkView>().RPC("PickUpSound",RPCMode.Others);
 		}
 		PlayRandomSound(pick_up_sound, 0.1f);
 	}
@@ -56,7 +56,7 @@ public class DeckScript : MonoBehaviour {
 	[RPC]
 	void ShuffleSound(){
 		if(Network.isServer){
-			networkView.RPC("ShuffleSound",RPCMode.Others);
+			GetComponent<NetworkView>().RPC("ShuffleSound",RPCMode.Others);
 		}
 		PlayRandomSound(shuffle_sound, 0.5f);		
 	}
@@ -73,7 +73,7 @@ public class DeckScript : MonoBehaviour {
 	[RPC]
 	void ImpactSound(float volume){
 		if(Network.isServer){
-			networkView.RPC("ImpactSound",RPCMode.Others,volume);
+			GetComponent<NetworkView>().RPC("ImpactSound",RPCMode.Others,volume);
 		}
 		PlayRandomSound(impact_sound, volume*0.3f);		
 	}
@@ -196,7 +196,7 @@ public class DeckScript : MonoBehaviour {
 	void Update () {
 		transform.FindChild("default").localScale = new Vector3(1,Mathf.Max(2,num_cards_) * CARD_THICKNESS_MULT,1);	
 		if(GetComponent<GrabbableScript>().held_by_player_ == -1){
-			rigidbody.mass = Mathf.Max(1,num_cards_) * DECK_MASS_PER_CARD;
+			GetComponent<Rigidbody>().mass = Mathf.Max(1,num_cards_) * DECK_MASS_PER_CARD;
 		}
 		if(top_card_ && bottom_card_){
 			var the_collider = GetComponent<BoxCollider>();
@@ -204,11 +204,11 @@ public class DeckScript : MonoBehaviour {
 			the_collider.extents = new Vector3(the_collider.extents.x,Vector3.Distance(top_card_.transform.position, bottom_card_.transform.position)*0.5f+0.1f,the_collider.extents.z);
 		}
 		if(num_cards_ <= 1){
-			transform.FindChild("default").renderer.enabled = false;
-			collider.enabled = false;
+			transform.FindChild("default").GetComponent<Renderer>().enabled = false;
+			GetComponent<Collider>().enabled = false;
 		} else {
-			transform.FindChild("default").renderer.enabled = true;
-			collider.enabled = true;
+			transform.FindChild("default").GetComponent<Renderer>().enabled = true;
+			GetComponent<Collider>().enabled = true;
 		}
 	}
 	

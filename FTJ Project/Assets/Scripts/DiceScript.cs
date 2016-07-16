@@ -14,13 +14,13 @@ public class DiceScript : MonoBehaviour {
 	const float DICE_DICE_SOUND_MULT = 1.0f;
 	
 	void PlayRandomSound(AudioClip[] clips, float volume){
-		audio.PlayOneShot(clips[Random.Range(0,clips.Length)], volume);
+		GetComponent<AudioSource>().PlayOneShot(clips[Random.Range(0,clips.Length)], volume);
 	}		
 	
 	[RPC]
 	public void ShakeSound(){
 		if(Network.isServer){
-			networkView.RPC("ShakeSound",RPCMode.Others);
+			GetComponent<NetworkView>().RPC("ShakeSound",RPCMode.Others);
 		}
 		PlayRandomSound(dice_impact_dice, DICE_DICE_SOUND_MULT*0.05f);
 	}
@@ -28,7 +28,7 @@ public class DiceScript : MonoBehaviour {
 	[RPC]
 	public void PickUpSound() {
 		if(Network.isServer){
-			networkView.RPC("PickUpSound",RPCMode.Others);
+			GetComponent<NetworkView>().RPC("PickUpSound",RPCMode.Others);
 		}
 		PlayRandomSound(dice_pick_up, 0.1f);
 	}
@@ -36,7 +36,7 @@ public class DiceScript : MonoBehaviour {
 	[RPC]
 	public void PlayImpactSound(int layer, float volume) {
 		if(Network.isServer){
-			networkView.RPC("PlayImpactSound",RPCMode.Others,layer,volume);
+			GetComponent<NetworkView>().RPC("PlayImpactSound",RPCMode.Others,layer,volume);
 		}
 		int table_layer = LayerMask.NameToLayer("Table");
 		int board_layer = LayerMask.NameToLayer("Board");

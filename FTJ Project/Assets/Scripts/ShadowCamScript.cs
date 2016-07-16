@@ -17,8 +17,8 @@ public class ShadowCamScript : MonoBehaviour {
 	Color old_ambient_light;
 	
 	void OnPreRender() {
-		old_light_intensity = GameObject.Find ("Point light").light.intensity;
-		GameObject.Find ("Point light").light.intensity = 0.0f;
+		old_light_intensity = GameObject.Find ("Point light").GetComponent<Light>().intensity;
+		GameObject.Find ("Point light").GetComponent<Light>().intensity = 0.0f;
 		old_ambient_light = RenderSettings.ambientLight;
 		RenderSettings.ambientLight = Color.black;
 		RenderSettings.fogMode = FogMode.Linear;
@@ -30,7 +30,7 @@ public class ShadowCamScript : MonoBehaviour {
 	}
 	
 	void OnPostRender() {
-		GameObject.Find ("Point light").light.intensity = old_light_intensity;
+		GameObject.Find ("Point light").GetComponent<Light>().intensity = old_light_intensity;
 		RenderSettings.ambientLight = old_ambient_light;
 		RenderSettings.fog = false;
 	}

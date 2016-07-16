@@ -39,7 +39,7 @@ public class BoardScript : MonoBehaviour {
 	}
 	
 	void Start () {
-		if(networkView.isMine){
+		if(GetComponent<NetworkView>().isMine){
 			SpawnDice();
 		}
 		if(ObjectManagerScript.Instance()){

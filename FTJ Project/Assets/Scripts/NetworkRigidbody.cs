@@ -25,10 +25,10 @@ public class NetworkRigidbody : MonoBehaviour {
 		// Send data to server
 		if (stream.isWriting)
 		{
-			Vector3 pos = rigidbody.position;
-			Quaternion rot = rigidbody.rotation;
-			Vector3 velocity = rigidbody.velocity;
-			Vector3 angularVelocity = rigidbody.angularVelocity;
+			Vector3 pos = GetComponent<Rigidbody>().position;
+			Quaternion rot = GetComponent<Rigidbody>().rotation;
+			Vector3 velocity = GetComponent<Rigidbody>().velocity;
+			Vector3 angularVelocity = GetComponent<Rigidbody>().angularVelocity;
 
 			stream.Serialize(ref pos);
 			stream.Serialize(ref velocity);
@@ -81,12 +81,12 @@ public class NetworkRigidbody : MonoBehaviour {
 	// By having interpolationBackTime the average ping, you will usually use interpolation.
 	// And only if no more data arrives we will use extra polation
 	void Update () {
-		if(networkView.isMine){
+		if(GetComponent<NetworkView>().isMine){
 			return;
 		}
-		rigidbody.isKinematic = true;
-		rigidbody.position = m_BufferedState[0].pos;
-		rigidbody.rotation = m_BufferedState[0].rot;
+		GetComponent<Rigidbody>().isKinematic = true;
+		GetComponent<Rigidbody>().position = m_BufferedState[0].pos;
+		GetComponent<Rigidbody>().rotation = m_BufferedState[0].rot;
 		/*if(!networkView.isMine){
 			rigidbody.useGravity = false;
 		}

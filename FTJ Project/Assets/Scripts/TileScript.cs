@@ -17,8 +17,8 @@ public class TileScript : MonoBehaviour {
 		transform.FindChild("Rules").gameObject.layer = LayerMask.NameToLayer("Active Card Render Texture");
 		
 		var tile_mesh = transform.FindChild("Tile_base").FindChild("default");
-		tile_mesh.renderer.material = new Material(tile_mesh.renderer.material);
-		tile_mesh.renderer.material.mainTexture = null; // render_texture;
+		tile_mesh.GetComponent<Renderer>().material = new Material(tile_mesh.GetComponent<Renderer>().material);
+		tile_mesh.GetComponent<Renderer>().material.mainTexture = null; // render_texture;
 		
 		camera.Render();
 		

@@ -16,7 +16,7 @@ public class MainCameraScript : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		old_rotation = transform.rotation;
-		old_fov = camera.fov;
+		old_fov = GetComponent<Camera>().fov;
 		zoomed = false;
 		zoom_amount = 0.0f;
 		int width = Screen.width;
@@ -26,7 +26,7 @@ public class MainCameraScript : MonoBehaviour {
 		} else {
 			width = Screen.height * 16 / 10;
 		}
-		camera.pixelRect = new Rect((Screen.width - width)*0.5f,(Screen.height - height)*0.5f,width,height);
+		GetComponent<Camera>().pixelRect = new Rect((Screen.width - width)*0.5f,(Screen.height - height)*0.5f,width,height);
 	}
 	
 	void StartZoom() {
@@ -70,6 +70,6 @@ public class MainCameraScript : MonoBehaviour {
 			zoom_amount = Mathf.Max(0.0f, zoom_amount - Time.deltaTime * ZOOM_SPEED);
 		}
 		transform.rotation = Quaternion.Lerp(old_rotation, target_rotation, zoom_amount);		
-		camera.fov = Mathf.Lerp(old_fov, old_fov * ZOOM_FOV, zoom_amount);		
+		GetComponent<Camera>().fov = Mathf.Lerp(old_fov, old_fov * ZOOM_FOV, zoom_amount);		
 	}
 }

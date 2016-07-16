@@ -101,7 +101,7 @@ public class ObjectManagerScript : MonoBehaviour {
 						grabbable.GetComponent<ParentTokenScript>().PickUpSound();
 						cursor_script.SetCardRotated(GetRotateFromGrabbable(grabbable));
 					}
-					grabbable.rigidbody.mass = 0.2f;
+					grabbable.GetComponent<Rigidbody>().mass = 0.2f;
 				}
 			}
 		}
@@ -177,7 +177,7 @@ public class ObjectManagerScript : MonoBehaviour {
 								heldCards.Remove(card);
 								
 								card.GetComponent<CardScript>().SetCardID(-1);
-								networkView.RPC("DestroyObject",RPCMode.AllBuffered,card.networkView.viewID);
+								GetComponent<NetworkView>().RPC("DestroyObject",RPCMode.AllBuffered,card.GetComponent<NetworkView>().viewID);
 								break;
 							}
 						}
@@ -201,7 +201,7 @@ public class ObjectManagerScript : MonoBehaviour {
 										}
 									}
 									cards.Clear();
-									networkView.RPC("DestroyObject",RPCMode.AllBuffered,grabbable.networkView.viewID);
+									GetComponent<NetworkView>().RPC("DestroyObject",RPCMode.AllBuffered,grabbable.GetComponent<NetworkView>().viewID);
 									break;
 								}
 							}
@@ -228,7 +228,7 @@ public class ObjectManagerScript : MonoBehaviour {
 								
 								// Mimick grab
 								deck.GetComponent<GrabbableScript>().held_by_player_ = player_id;
-								deck.rigidbody.mass = 0.2f;
+								deck.GetComponent<Rigidbody>().mass = 0.2f;
 								cursor_script.SetCardFaceUp((deck.transform.up.y > 0.0f));
 								cursor_script.SetCardRotated(GetRotateFromGrabbable(deck));
 								
@@ -238,9 +238,9 @@ public class ObjectManagerScript : MonoBehaviour {
 								
 								// TODO: Investigate reason for cardid change
 								card.GetComponent<CardScript>().SetCardID(-1);
-								networkView.RPC("DestroyObject",RPCMode.AllBuffered,card.networkView.viewID);
+								GetComponent<NetworkView>().RPC("DestroyObject",RPCMode.AllBuffered,card.GetComponent<NetworkView>().viewID);
 								grabbable.GetComponent<CardScript>().SetCardID(-1);
-								networkView.RPC("DestroyObject",RPCMode.AllBuffered,grabbable.networkView.viewID);
+								GetComponent<NetworkView>().RPC("DestroyObject",RPCMode.AllBuffered,grabbable.GetComponent<NetworkView>().viewID);
 								merged = true;
 								break;
 							}
@@ -255,7 +255,7 @@ public class ObjectManagerScript : MonoBehaviour {
 									// Put new card on lowest side of held deck
 									deck.GetComponent<DeckScript>().AddCard((deck.transform.up.y < 0.0f), grabbable.GetComponent<CardScript>().card_id());
 									grabbable.GetComponent<CardScript>().SetCardID(-1);
-									networkView.RPC("DestroyObject",RPCMode.AllBuffered,grabbable.networkView.viewID);
+									GetComponent<NetworkView>().RPC("DestroyObject",RPCMode.AllBuffered,grabbable.GetComponent<NetworkView>().viewID);
 									break;
 								}
 							}
@@ -268,7 +268,7 @@ public class ObjectManagerScript : MonoBehaviour {
 						grabbable.GetComponent<ParentTokenScript>().PickUpSound();
 						cursor_script.SetCardRotated(GetRotateFromGrabbable(grabbable));
 					}
-					grabbable.rigidbody.mass = 0.2f;
+					grabbable.GetComponent<Rigidbody>().mass = 0.2f;
 				}
 			}
 		}
@@ -296,7 +296,7 @@ public class ObjectManagerScript : MonoBehaviour {
 		// Grab whatever card is on top of the deck, depending on which way
 		// the deck is facing
 		GameObject card = null;
-		if((deck.rigidbody.rotation * new Vector3(0,1,0)).y >= 0.0f){
+		if((deck.GetComponent<Rigidbody>().rotation * new Vector3(0,1,0)).y >= 0.0f){
 			card = deck.GetComponent<DeckScript>().TakeCard(true);
 		} else {
 			card = deck.GetComponent<DeckScript>().TakeCard(false);
@@ -326,14 +326,14 @@ public class ObjectManagerScript : MonoBehaviour {
 		foreach(GameObject grabbable in grabbable_objects){
 			var grabbable_script = grabbable.GetComponent<GrabbableScript>();
 			if(grabbable_script.held_by_player_ == player_id){
-				grabbable.rigidbody.velocity = new Vector3(grabbable.rigidbody.velocity.x, -5.0f, grabbable.rigidbody.velocity.z);
-				if(grabbable.rigidbody.velocity.magnitude > MAX_DICE_VEL){
-					grabbable.rigidbody.velocity = grabbable.rigidbody.velocity.normalized * MAX_DICE_VEL;
+				grabbable.GetComponent<Rigidbody>().velocity = new Vector3(grabbable.GetComponent<Rigidbody>().velocity.x, -5.0f, grabbable.GetComponent<Rigidbody>().velocity.z);
+				if(grabbable.GetComponent<Rigidbody>().velocity.magnitude > MAX_DICE_VEL){
+					grabbable.GetComponent<Rigidbody>().velocity = grabbable.GetComponent<Rigidbody>().velocity.normalized * MAX_DICE_VEL;
 				}
 				if(grabbable.GetComponent<DiceScript>()){
-					grabbable.rigidbody.angularVelocity = new Vector3(Random.Range(-1.0f,1.0f),Random.Range(-1.0f,1.0f),Random.Range(-1.0f,1.0f)) * DICE_ANG_SPEED;			
+					grabbable.GetComponent<Rigidbody>().angularVelocity = new Vector3(Random.Range(-1.0f,1.0f),Random.Range(-1.0f,1.0f),Random.Range(-1.0f,1.0f)) * DICE_ANG_SPEED;			
 				}
-				grabbable.rigidbody.mass = 1.0f;
+				grabbable.GetComponent<Rigidbody>().mass = 1.0f;
 				grabbable_script.held_by_player_ = -1;
 			}
 		}
@@ -365,11 +365,11 @@ public class ObjectManagerScript : MonoBehaviour {
 	[RPC]
 	public void RecoverDice() {
 		if(!Network.isServer){
-			networkView.RPC("RecoverDice", RPCMode.Server);
+			GetComponent<NetworkView>().RPC("RecoverDice", RPCMode.Server);
 			return;
 		} else {
 			foreach(GameObject grabbable in grabbable_objects){
-				networkView.RPC("DestroyObject",RPCMode.AllBuffered,grabbable.networkView.viewID);
+				GetComponent<NetworkView>().RPC("DestroyObject",RPCMode.AllBuffered,grabbable.GetComponent<NetworkView>().viewID);
 			}
 			board_object.GetComponent<BoardScript>().SpawnDice();
 			NetUIScript.Instance().SpawnHealthTokens();
@@ -407,9 +407,9 @@ public class ObjectManagerScript : MonoBehaviour {
 		foreach(GameObject token in token_objects){
 			var token_script = token.GetComponent<TokenScript>();
 			if(players.ContainsKey(token_script.owner_id_)){
-				token.renderer.material.color = players[token_script.owner_id_].color_;
+				token.GetComponent<Renderer>().material.color = players[token_script.owner_id_].color_;
 			} else {
-				token.renderer.material.color = Color.white;
+				token.GetComponent<Renderer>().material.color = Color.white;
 			}
 		}
 	}
@@ -418,7 +418,7 @@ public class ObjectManagerScript : MonoBehaviour {
 	}
 	
 	void UpdatePhysicsState(GameObject grabbable, GameObject holder){
-		var held_rigidbody = grabbable.rigidbody;
+		var held_rigidbody = grabbable.GetComponent<Rigidbody>();
 		var target_position = holder.transform.position;
 		var cursor_script = holder.GetComponent<CursorScript>();
 		if(!cursor_script.tapping()){
@@ -527,7 +527,7 @@ public class ObjectManagerScript : MonoBehaviour {
 			bool top = Vector3.Dot(card.transform.position - deck.transform.position, deck.transform.up) >= 0.0;
 			deck.GetComponent<DeckScript>().AddCard(top, card.GetComponent<CardScript>().card_id());
 			card.GetComponent<CardScript>().SetCardID(-1);
-			networkView.RPC("DestroyObject",RPCMode.AllBuffered,card.networkView.viewID);
+			GetComponent<NetworkView>().RPC("DestroyObject",RPCMode.AllBuffered,card.GetComponent<NetworkView>().viewID);
 		}
 	}
 	
@@ -562,7 +562,7 @@ public class ObjectManagerScript : MonoBehaviour {
 				}
 			}
 			cards.Clear();
-			networkView.RPC("DestroyObject",RPCMode.AllBuffered,deck_b.networkView.viewID);
+			GetComponent<NetworkView>().RPC("DestroyObject",RPCMode.AllBuffered,deck_b.GetComponent<NetworkView>().viewID);
 		}
 	}
 	
@@ -589,9 +589,9 @@ public class ObjectManagerScript : MonoBehaviour {
 			deck.GetComponent<DeckScript>().AddCard(top, card_a.GetComponent<CardScript>().card_id());
 			deck.GetComponent<DeckScript>().AddCard(top, card_b.GetComponent<CardScript>().card_id());
 			card_a.GetComponent<CardScript>().SetCardID(-1);
-			networkView.RPC("DestroyObject",RPCMode.AllBuffered,card_a.networkView.viewID);
+			GetComponent<NetworkView>().RPC("DestroyObject",RPCMode.AllBuffered,card_a.GetComponent<NetworkView>().viewID);
 			card_b.GetComponent<CardScript>().SetCardID(-1);
-			networkView.RPC("DestroyObject",RPCMode.AllBuffered,card_b.networkView.viewID);
+			GetComponent<NetworkView>().RPC("DestroyObject",RPCMode.AllBuffered,card_b.GetComponent<NetworkView>().viewID);
 		}
 	}
 }

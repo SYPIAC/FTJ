@@ -12,15 +12,15 @@ public class CardScript : MonoBehaviour {
 	[RPC]
 	public void PrepareLocal(int card_id) {
 		var card_back = transform.FindChild("Back").transform.FindChild("default");
-		card_back.renderer.material = CardManagerScript.Instance().GetBackMaterial(card_id);
+		card_back.GetComponent<Renderer>().material = CardManagerScript.Instance().GetBackMaterial(card_id);
 		var card_front = transform.FindChild("FrontBorder").transform.FindChild("default");
-		card_front.renderer.material = CardManagerScript.Instance().GetFrontMaterial(card_id);
+		card_front.GetComponent<Renderer>().material = CardManagerScript.Instance().GetFrontMaterial(card_id);
 		card_id_ = card_id;
 	}
 	
 	public void Prepare(int card_id) {
-		if(Network.isServer && networkView){
-			networkView.RPC("PrepareLocal",RPCMode.AllBuffered,card_id);
+		if(Network.isServer && GetComponent<NetworkView>()){
+			GetComponent<NetworkView>().RPC("PrepareLocal",RPCMode.AllBuffered,card_id);
 		} else {
 			PrepareLocal(card_id);
 		}
@@ -29,7 +29,7 @@ public class CardScript : MonoBehaviour {
 	[RPC]
 	public void PickUpSound() {
 		if(Network.isServer){
-			networkView.RPC("PickUpSound",RPCMode.Others);
+			GetComponent<NetworkView>().RPC("PickUpSound",RPCMode.Others);
 		}
 		PlayRandomSound(pick_up_sound, 0.1f);
 	}
@@ -42,13 +42,13 @@ public class CardScript : MonoBehaviour {
 	}
 		
 	void PlayRandomSound(AudioClip[] clips, float volume){
-		audio.PlayOneShot(clips[Random.Range(0,clips.Length)], volume);
+		GetComponent<AudioSource>().PlayOneShot(clips[Random.Range(0,clips.Length)], volume);
 	}		
 	
 	[RPC]
 	void ImpactSound(float volume){
 		if(Network.isServer){
-			networkView.RPC("ImpactSound",RPCMode.Others,volume);
+			GetComponent<NetworkView>().RPC("ImpactSound",RPCMode.Others,volume);
 		}
 		PlayRandomSound(impact_sound, volume*0.2f);		
 	}

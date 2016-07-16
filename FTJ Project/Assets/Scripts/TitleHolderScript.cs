@@ -18,14 +18,14 @@ public class TitleHolderScript : MonoBehaviour {
 	}
 	
 	public void Show() {
-		transform.FindChild("Blackness").FindChild("default").renderer.enabled = true;
-		transform.FindChild("Title").FindChild("default").renderer.enabled = true;
-		transform.FindChild("Title highlight").light.intensity = 1.0f;
+		transform.FindChild("Blackness").FindChild("default").GetComponent<Renderer>().enabled = true;
+		transform.FindChild("Title").FindChild("default").GetComponent<Renderer>().enabled = true;
+		transform.FindChild("Title highlight").GetComponent<Light>().intensity = 1.0f;
 	}
 	
 	public void Hide() {
-		transform.FindChild("Blackness").FindChild("default").renderer.enabled = false;
-		transform.FindChild("Title").FindChild("default").renderer.enabled = false;
-		transform.FindChild("Title highlight").light.intensity = 0.0f;
+		transform.FindChild("Blackness").FindChild("default").GetComponent<Renderer>().enabled = false;
+		transform.FindChild("Title").FindChild("default").GetComponent<Renderer>().enabled = false;
+		transform.FindChild("Title highlight").GetComponent<Light>().intensity = 0.0f;
 	}
 }
